@@ -1,0 +1,258 @@
+body{
+    font-family: "Courier New", Courier, monospace;
+    background-color: #EAEAEA;
+    color: #000091;
+    padding: 20px 10px;
+}
+
+h1{
+    font-size: 30px;
+    font-weight: bold;
+    text-align: center;
+}
+
+div.intro{
+    font-size: 16px;
+}
+
+div.chart-outer{
+    height: 500px;
+    width: 100%;
+    margin-top: 40px;
+}
+
+div.chart-title{
+    height: 50px;
+}
+div.chart-title h2{
+    font-size: 20px;
+    font-weight: bold;
+}
+
+div.chart-inner{
+    margin-top: -30px;
+    height: calc(100% - 50px);
+}
+
+div.chart-container{
+    height: 100%;
+}
+
+button{
+    text-transform: uppercase;
+    border-radius: 4px;
+    font-size: 12px;
+    border: 0;
+    line-height: 1.5;
+    padding-top: 4px;
+}
+
+div.menu{
+    text-align: right;
+}
+#choose_countries_button{
+    background-color: #000091;
+    color: #FFFFFF;
+}
+
+#active_countries{
+    padding: 0;
+}
+div.modal-body li{
+    list-style: none;
+}
+div.modal-body li button.menu-button {
+    background-color: #000091;
+    color: #FFFFFF;
+    border-radius: 50%;
+    height: 20px;
+    width: 20px;
+    margin-right: 10px;
+    font-size: 20px;
+    line-height: 1;
+    padding-left: 5px;
+    padding-top: 1px;
+}
+
+#menu_add_country input{
+    border: 2px solid #000091;
+    border-radius: 4px;
+    color: #000091;
+    background-color: #FFFFFF;
+    font-size: 13px;
+    width: 209px;
+    padding: 3px;
+}
+
+#search_result {
+    padding: 6px;
+    font-size: 13px;
+    margin-top: 11px;
+    margin-bottom: 45px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+#search_result li{
+    padding-top: 5px;
+}
+#search_result li:not(:last-child){
+    border-bottom: 1px solid #CCCCCC;
+    padding-bottom: 5px;
+}
+
+
+
+
+body.modal-open {
+    overflow: hidden;
+}
+/* The Modal (background) */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 9000; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
+
+/* Modal Content/Box */
+.modal .modal-content {
+    position: relative;
+    margin: auto auto;
+    top: 10%;
+    padding: 0;
+    padding-bottom: 10px;
+    border: 2px solid #000091;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 625px;
+    box-shadow: 0 -4px 4px 0 rgba(0,0,0,.14), 0 -6px 2px -4px rgba(0,0,0,.2), 0 -2px 10px 0 rgba(0,0,0,.12);
+    animation-name: animatetop;
+    animation-duration: 0.4s;
+    min-height: 50%;
+    max-height: 80%;
+    background-color: #fefefe;
+}
+
+.modal .modal-body{
+    max-height: 100%;
+    overflow: auto;
+}
+
+/* The Close Button */
+.modal .close {
+    border-radius: 100%;
+    border: 1px solid white;
+    font-size: 30px;
+    font-weight: lighter;
+    color: white;
+    height: 30px;
+    width: 30px;
+    padding: 0;
+    text-align: center;
+    text-shadow: none;
+    line-height: 1;
+    margin: 4px 0 0;
+    cursor: pointer;
+}
+
+.modal .modal-header .title{
+    width: calc(100% - 30px);
+    margin: 0;
+    position: absolute;
+}
+
+/* Modal Header */
+.modal .modal-header {
+    display: block;
+    padding: 0 10px 0;
+    border-bottom: 2px solid #000091;
+    background-color: #000091;
+    color: white;
+    height: 40px;
+    min-height: 40px;
+}
+.modal .modal-header h3{
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    margin-right: 35px;
+    margin-bottom: 3px;
+    margin-top: 7px;
+    border-bottom: 0;
+    padding-bottom: unset;
+    color: white;
+    font-weight: bold;
+    font-size: 20px;
+}
+
+/* Modal Body */
+.modal .modal-body {
+    padding: 2px 10px 20px;
+}
+
+.modal .modal-body>form{
+    padding-top: 15px;
+}
+
+.modal .modal-footer {
+    display: block;
+    padding: 7px 5px;
+    min-height: 47px;
+    background-color: #000091;
+    bottom: 0;
+    position: absolute;
+    width: 100%;
+    text-align: right;
+}
+
+
+@media only screen and  (max-width: 799px) {
+    .modal-header h3{
+        margin-bottom: 2px;
+    }
+}
+
+.modal .modal-footer button.apply-button{
+    background-color: white;
+    color: #000091;
+}
+
+@media only screen and (max-width: 800px) {
+    .modal .close {
+        line-height: 0.85;
+    }
+}
+
+
+
+
+div.loader-container{
+    display: none;
+    z-index: 10000;
+    background: rgba(255,255,255,0.5);
+    position: fixed;
+    height: 100%;
+    width: 100%;
+}
+div.loader {
+    margin: auto;
+    top: calc(50% - 60px);
+    left: calc(50% - 60px);
+    position: absolute;
+    border: 16px solid #FFFFFF;
+    border-top: 16px solid #000091;
+    border-radius: 50%;
+    width: 120px;
+    height: 120px;
+    animation: spin 4s linear infinite;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}

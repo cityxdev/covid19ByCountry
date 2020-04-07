@@ -1,0 +1,482 @@
+navigator.sayswho= (function(){
+    var ua= navigator.userAgent, tem,
+        M= ua.match(/(opera|chrome|safari|firefox|msie|trident(?=\/))\/?\s*(\d+)/i) || [];
+    if(/trident/i.test(M[1])){
+        tem=  /\brv[ :]+(\d+)/g.exec(ua) || [];
+        return 'IE '+(tem[1] || '');
+    }
+    if(M[1]=== 'Chrome'){
+        tem= ua.match(/\b(OPR|Edge)\/(\d+)/);
+        if(tem!= null) return tem.slice(1).join(' ').replace('OPR', 'Opera');
+    }
+    M= M[2]? [M[1], M[2]]: [navigator.appName, navigator.appVersion, '-?'];
+    if((tem= ua.match(/version\/(\d+)/i))!= null) M.splice(1, 1, tem[1]);
+    return M.join(' ');
+})();
+var isOpera = navigator.sayswho.indexOf('Opera')===0;
+var isFirefox = navigator.sayswho.indexOf('Firefox')===0;
+var isSafari = navigator.sayswho.indexOf('Safari')===0;
+var isChrome = navigator.sayswho.indexOf('Chrome')===0;
+var isIE = navigator.sayswho.indexOf('IE')===0;
+var isEdge = navigator.sayswho.indexOf('Edge')===0;
+
+
+
+
+
+
+const daysBetween = function (firstDate, secondDate) {
+    const oneDay = 24 * 60 * 60 * 1000; // hours*minutes*seconds*milliseconds
+    return Math.round(Math.abs((firstDate - secondDate) / oneDay));
+};
+Date.prototype.plusDays = function(days) {
+    var date = new Date(this.valueOf());
+    date.setDate(date.getDate() + days);
+    return date;
+};
+
+
+const showLoader = function (immediatly) {
+    let loader = $('div.loader-container');
+    if(!immediatly) {
+        if (!loader.data('timeoutId'))
+            loader.data('timeoutId', []);
+        let timeoutId = setTimeout(function () {
+            loader.show();
+        }, 300);
+        loader.data('timeoutId').push(timeoutId);
+    } else loader.show();
+};
+
+const hideLoader = function () {
+    let loader = $('div.loader-container');
+    loader.hide();
+    let timeoutId = loader.data('timeoutId');
+    if(timeoutId)
+        for (let t in timeoutId)
+            clearTimeout(timeoutId[t]);
+    loader.data('timeoutId', []);
+};
+
+
+
+
+
+const COUNTRY_CODES_CACHE_KEY = 'countryCodes';
+const COUNTRY_CODES_CACHE_EXPIRE = 24*60*60;
+
+const SERIES_ALIGNMENT_MINIMUM = 100;
+
+
+let countryCodes = [];
+let allCountries = [];
+let charts = {};
+
+const transformCountryName = function(name) {
+    if(name==='United States')
+        return 'US';
+    return name;
+};
+
+const loadCountries = function(countryDataFromServer,covidDataFromServer){
+    let visitedCountries = {};
+    for(let e in countryDataFromServer){
+        const popElem = countryDataFromServer[e];
+        const name = transformCountryName(popElem["Country Name"]);
+        if(covidDataFromServer[name] && !visitedCountries[name]){
+            allCountries.push({code: popElem["Country Code"],name: name});
+            visitedCountries[name]={};
+        }
+    }
+};
+
+const loadCountryCodes = function() {
+    countryCodes=[];
+    let countryCodesTmp = cache4js.getCache(COUNTRY_CODES_CACHE_KEY,function () {
+        return ['PRT','ESP','ITA','GBR','USA'];
+    },COUNTRY_CODES_CACHE_EXPIRE).slice(0,5);
+    for(let cIndex in countryCodesTmp){
+        for(let ac in allCountries){
+            if(allCountries[ac].code===countryCodesTmp[cIndex]){
+                countryCodes.push(countryCodesTmp[cIndex]);
+                break;
+            }
+        }
+    }
+};
+
+const retrieveData = function(countryDataFromServer,covidDataFromServer){
+    const COLORS = ['#003f5c','#bc5090','#007e7b','#ff6361','#ffa600','#008004','#58508d','#9c3600'];
+
+    const data = {};
+    for(let e in countryDataFromServer){
+        const popElem = countryDataFromServer[e];
+        const name = transformCountryName(popElem["Country Name"]);
+        if(countryCodes.indexOf(popElem["Country Code"])>=0
+            && (!data[name] || data[name].popYear<popElem["Year"])){
+            data[name]={
+                pop:popElem["Value"],
+                popYear:popElem["Year"],
+                conf:{},
+                dead:{},
+                reco:{}
+            }
+        }
+    }
+    let count = 0;
+    for(let cName in data)
+        data[cName].color=COLORS[count++];
+
+    for(let cName in data){
+        let countryData = data[cName];
+        let covidDataElem = covidDataFromServer[cName];
+        for(let i = 0 ; i < covidDataElem.length ; i++){
+            let entry = covidDataElem[i];
+            if(entry.confirmed>0){
+                if(!countryData.conf.firstDate){
+                    countryData.conf.firstDate=new Date(entry.date);
+                    countryData.conf.data=[];
+                }
+                countryData.conf.data.push(entry.confirmed);
+            }
+            if(entry.deaths>0){
+                if(!countryData.dead.firstDate){
+                    countryData.dead.firstDate=new Date(entry.date);
+                    countryData.dead.data=[];
+                }
+                countryData.dead.data.push(entry.deaths);
+            }
+            if(entry.recovered>0){
+                if(!countryData.reco.firstDate){
+                    countryData.reco.firstDate=new Date(entry.date);
+                    countryData.reco.data=[];
+                }
+                countryData.reco.data.push(entry.recovered);
+            }
+        }
+    }
+
+    data['10%Growth_5Mppl']={
+        color:'#FF00FF',
+        pop: 5000000,
+        conf:{firstDate:new Date('2020-02-15'),data:[100]},
+        dead:{firstDate:new Date('2020-02-15'),data:[5]},
+        reco:{firstDate:new Date('2020-02-15'),data:[15]}
+    };
+    for(let i = 1 ; i < daysBetween(data['10%Growth_5Mppl'].conf.firstDate,new Date()) ; i++) {
+        data['10%Growth_5Mppl'].conf.data.push(data['10%Growth_5Mppl'].conf.data[i-1]*1.1);
+        data['10%Growth_5Mppl'].dead.data.push(data['10%Growth_5Mppl'].conf.data[i]*0.05);
+        data['10%Growth_5Mppl'].reco.data.push(data['10%Growth_5Mppl'].conf.data[i]*0.15);
+    }
+
+    return data;
+};
+
+const prepareData = function(data) {
+    for (let countryCode in data) {
+        let country = data[countryCode];
+        let megas = country.pop / 1000000;
+
+        for (let i = 0; i < country.conf.data.length; i++)
+            if (country.conf.data[i] >= SERIES_ALIGNMENT_MINIMUM) {
+                country.first100ConfDate = country.conf.firstDate.plusDays(i + 1);
+                break;
+            }
+
+        country.confPerMega = {firstDate: country.conf.firstDate, data: []};
+        for (let i = 0; i < country.conf.data.length; i++)
+            country.confPerMega.data.push(country.conf.data[i] / megas);
+
+        country.deadPerMega = {firstDate: country.dead.firstDate, data: []};
+        for (let i = 0; i < country.dead.data.length; i++)
+            country.deadPerMega.data.push(country.dead.data[i] / megas);
+
+        country.deadPerConf = {firstDate: country.dead.firstDate, data: []};
+        for (let i = 0; i < country.dead.data.length; i++) {
+            const daysBetweenConfAndDead = daysBetween(country.conf.firstDate, country.dead.firstDate);
+            country.deadPerConf.data.push(country.dead.data[i] / country.conf.data[i + daysBetweenConfAndDead] * 100);
+        }
+
+
+        country.recoPerConf = {firstDate: country.reco.firstDate, data: []};
+        for (let i = 0; i < country.reco.data.length; i++) {
+            const daysBetweenConfAndReco = daysBetween(country.conf.firstDate, country.reco.firstDate);
+            country.recoPerConf.data.push(country.reco.data[i] / country.conf.data[i + daysBetweenConfAndReco] * 100);
+        }
+    }
+};
+
+const drawChart = function(elemId,data,countryColors) {
+    if(charts[elemId])
+        charts[elemId].dispose();
+    const chart = am4core.create(elemId, am4charts.XYChart);
+    charts[elemId]=chart;
+
+    chart.numberFormatter.numberFormat = "#,###.##";
+
+    let categoryAxis = chart.xAxes.push(new am4charts.CategoryAxis());
+    categoryAxis.dataFields.category = "day";
+    categoryAxis.fontSize=12;
+    categoryAxis.title.text='days from the 100th confirmed case';
+
+    let valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
+    valueAxis.fontSize=12;
+
+    chart.scrollbarX = new am4charts.XYChartScrollbar();
+
+    for(let countryCode in countryColors){
+        let series = chart.series.push(new am4charts.LineSeries());
+        series.dataFields.valueY = countryCode;
+        series.dataFields.categoryX = "day";
+        series.name = countryCode;
+        series.strokeWidth = 1;
+        series.minBulletDistance = 10;
+
+
+        series.legendSettings.valueText = "{valueY}";
+        series.visible = true;
+        series.stroke = am4core.color(countryColors[countryCode]);
+        const isRealData = countryCode.indexOf('_')<0;
+        if(!isRealData) {
+            series.strokeDasharray = 3;
+            series.strokeWidth = 1;
+        }
+        series.tooltip.getFillFromObject=false;
+        series.tooltip.background.fill= am4core.color(countryColors[countryCode]);
+        series.tooltip.background.color= am4core.color("#ffffff");
+
+        chart.scrollbarX.series.push(series);
+
+        if(isRealData) {
+            const circleBullet = new am4charts.CircleBullet();
+            circleBullet.fill = am4core.color(countryColors[countryCode]);
+            circleBullet.circle.stroke = am4core.color("#fff");
+            circleBullet.circle.strokeWidth = 1;
+            circleBullet.circle.radius = 4;
+            series.bullets.push(circleBullet);
+        }
+    }
+
+    chart.responsive.enabled = true;
+    chart.cursor = new am4charts.XYCursor();
+
+    chart.data = data;
+
+    chart.legend = new am4charts.Legend();
+    chart.legend.fontSize=12;
+    chart.legend.maxWidth=20;
+};
+
+const createCharts = function(data) {
+    let confData = [], deadData = [], deadPerConfData = [], recoPerConfData = [];
+
+    let countries = {};
+
+    let confMaxDelta=0, suspMaxDelta=0, deadMaxDelta=0, recoMaxDelta=0;
+
+    let countryColors={};
+
+    for (let countryCode in data) {
+        let country = data[countryCode];
+        countryColors[countryCode]=data[countryCode].color;
+
+        const confStartIndex = daysBetween(country.first100ConfDate,country.conf.firstDate)-1;
+        const confEndIndex = country.conf.data.length-1;
+        confMaxDelta = confMaxDelta=Math.max(confMaxDelta,confEndIndex-confStartIndex);
+
+        const deadStartIndex = country.first100ConfDate < country.dead.firstDate
+            ? 0
+            : daysBetween(country.first100ConfDate,country.dead.firstDate)-1;
+        const recoStartIndex = country.first100ConfDate < country.reco.firstDate
+            ? 0
+            : daysBetween(country.first100ConfDate,country.reco.firstDate)-1;
+        const deadEndIndex = country.dead.data.length-1;
+        const recoEndIndex = country.reco.data.length-1;
+        deadMaxDelta = deadMaxDelta=Math.max(deadMaxDelta,deadEndIndex-deadStartIndex);
+        recoMaxDelta = recoMaxDelta=Math.max(recoMaxDelta,recoEndIndex-recoStartIndex);
+
+        countries[countryCode] = {
+            confStartIndex: confStartIndex,
+            confEndIndex: confEndIndex,
+
+            deadStartIndex: deadStartIndex,
+            deadEndIndex: deadEndIndex,
+
+            recoStartIndex: recoStartIndex,
+            recoEndIndex: recoEndIndex
+        };
+    }
+
+    for(let count = 0 ; count<=confMaxDelta ; count++) {
+        const elem = {
+            day: count
+        };
+        for (let countryCode in data) {
+            let country = data[countryCode];
+            elem[countryCode] = countries[countryCode].confStartIndex+count<=countries[countryCode].confEndIndex
+                ? country.confPerMega.data[countries[countryCode].confStartIndex+count]
+                : null;
+        }
+        confData.push(elem);
+    }
+
+    for(let count = 0 ; count<=deadMaxDelta ; count++) {
+        const elem = {
+            day: count
+        };
+        for (let countryCode in data) {
+            let country = data[countryCode];
+            elem[countryCode] = countries[countryCode].deadStartIndex+count<=countries[countryCode].deadEndIndex
+                ? country.deadPerMega.data[countries[countryCode].deadStartIndex+count]
+                : null;
+        }
+        deadData.push(elem);
+    }
+
+    for(let count = 0 ; count<=deadMaxDelta ; count++) {
+        const elem = {
+            day: count
+        };
+        for (let countryCode in data) {
+            let country = data[countryCode];
+            elem[countryCode] = countries[countryCode].deadStartIndex+count<=countries[countryCode].deadEndIndex
+                ? country.deadPerConf.data[countries[countryCode].deadStartIndex+count]
+                : null;
+        }
+        deadPerConfData.push(elem);
+    }
+
+    for(let count = 0 ; count<=recoMaxDelta ; count++) {
+        const elem = {
+            day: count
+        };
+        for (let countryCode in data) {
+            let country = data[countryCode];
+            elem[countryCode] = countries[countryCode].recoStartIndex+count<=countries[countryCode].recoEndIndex
+                ? country.recoPerConf.data[countries[countryCode].recoStartIndex+count]
+                : null;
+        }
+        recoPerConfData.push(elem);
+    }
+
+    drawChart('conf_chart', confData, countryColors);
+    drawChart('dead_chart', deadData, countryColors);
+    drawChart('dead_per_conf_chart', deadPerConfData, countryColors);
+    drawChart('reco_per_conf_chart', recoPerConfData, countryColors);
+};
+
+const reload = function(){
+    countryCodes = [];
+    allCountries = [];
+    showLoader(false);
+    cache4js.setLocalNamespace('covid19_country_comparison');
+    cache4js.ajaxCache({
+        url:'https://pkgstore.datahub.io/core/population/population_json/data/43d34c2353cbd16a0aa8cadfb193af05/population_json.json',
+        dataType: 'json',
+        success: function (countryDataFromServer) {
+            cache4js.ajaxCache({
+                url:'https://pomber.github.io/covid19/timeseries.json',
+                success: function (codvidDataFromServer) {
+                    $('#choose_countries_button').click(function () {
+                        $('#choose_countries_modal').trigger('open');
+                        onModalOpen();
+                    });
+                    hideLoader();
+
+                    loadCountries(countryDataFromServer,codvidDataFromServer);
+
+                    loadCountryCodes();
+
+                    let data = retrieveData(countryDataFromServer,codvidDataFromServer);
+                    prepareData(data);
+                    am4core.ready(function () {
+                        am4core.useTheme(am4themes_material);
+                        createCharts(data);
+                    });
+                }
+            },5*60);
+        }
+    },5*60*60);
+};
+
+const onModalOpen = function() {
+    const countryUl = $('#active_countries');
+    countryUl.empty();
+    let codes = countryUl.data('codes')?countryUl.data('codes').slice():countryCodes.slice();
+    for(let c in codes){
+        let country = undefined;
+        for(let ac in allCountries)
+            if(allCountries[ac].code===codes[c]){
+                country=allCountries[ac];
+                break;
+            }
+
+        if(country)
+            countryUl.append($('<li><button data-code="'+country.code+'" class="menu-button remove-button">&times;</button>'+country.name+'</li>'))
+    }
+
+    countryUl.data('codes',codes);
+
+    const menuAddCountry = $('#menu_add_country');
+    menuAddCountry.empty();
+    menuAddCountry.append($('<input type="text" placeholder="search by country name"/>'));
+
+    const searchInput = $('input',menuAddCountry);
+    searchInput.keyup(function () {
+        const search = $(this).val().toLowerCase();
+        $('ul',menuAddCountry).remove();
+        if(search.length>1){
+            const resultsUl = $('<ul id="search_result"></ul>');
+            menuAddCountry.append(resultsUl);
+
+            let codes = $('#active_countries').data('codes').slice();
+            for(let c in allCountries){
+                let country = allCountries[c];
+                if(codes.indexOf(country.code)<0 && (country.name.toLowerCase().indexOf(search)===0 || search===country.code.toLowerCase()))
+                    resultsUl.append($('<li><button data-code="'+country.code+'" class="menu-button add-button">&plus;</button>'+country.name+'</li>'));
+            }
+
+            $('button',resultsUl).click(function () {
+                let codes = $('#active_countries').data('codes').slice();
+                if(codes.length>=5)
+                    alert("You can only add 5 countries.");
+                else {
+                    codes.push($(this).data('code'));
+                    $('#active_countries').data('codes',codes);
+                    onModalOpen();
+                }
+            });
+
+        }
+    });
+
+    $('button.remove-button',countryUl).click(function () {
+        let codes = $('#active_countries').data('codes').slice();
+        codes.splice(codes.indexOf($(this).data('code')),1);
+        $('#active_countries').data('codes',codes);
+        onModalOpen();
+    });
+
+    $('#choose_countries_modal button.apply-button').click(function () {
+        $('#choose_countries_modal button.apply-button').trigger('close');
+        showLoader(true);
+
+        let apply = function(){
+            let codes = $('#active_countries').data('codes').slice();
+            countryCodes=codes;
+            cache4js.storeCache(COUNTRY_CODES_CACHE_KEY,countryCodes,COUNTRY_CODES_CACHE_EXPIRE);
+            reload();
+        };
+        setTimeout(function (){
+            if(isIE)
+                apply();
+            else Promise.resolve().then(apply)
+        },50);
+    });
+
+    searchInput.focus();
+};
+
+$(function () {
+    reload();
+});
