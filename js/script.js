@@ -240,7 +240,7 @@ const retrieveData = function(countryDataFromServer,covidDataFromServer,testingD
 
                 let dateDelta = (lastDate?daysBetween(lastDate, date):0);
                 if(dateDelta>1)
-                    for (let i = 0; i < dateDelta ; i++)
+                    for (let i = 1; i < dateDelta ; i++)
                         countryData.test.data.push(null);
 
                 try {
@@ -310,10 +310,10 @@ const prepareData = function(data) {
 
         country.testPerMega = {firstDate: country.test.firstDate, data: []};
         for (let i = 0; i < (country.test.data?country.test.data.length:0) ; i++) {
-                let absValue = country.test.data[i];
+            let absValue = country.test.data[i];
 
-                country.testPerMega.data.push(absValue===null||absValue===undefined ? null : absValue/megas);
-            }
+            country.testPerMega.data.push(absValue===null||absValue===undefined ? null : absValue/megas);
+        }
     }
 };
 
@@ -578,10 +578,13 @@ const onModalOpen = function() {
             menuAddCountry.append(resultsUl);
 
             let codes = $('#active_countries').data('codes').slice();
-            for(let c in allCountries){
+            let usedCodes = {};
+            for(let c in allCountries) {
                 let country = allCountries[c];
-                if(codes.indexOf(country.code)<0 && (country.name.toLowerCase().indexOf(search)===0 || search===country.code.toLowerCase()))
-                    resultsUl.append($('<li><button data-code="'+country.code+'" class="menu-button add-button">&plus;</button>'+country.name+'</li>'));
+                if (!usedCodes[country.code] && codes.indexOf(country.code) < 0 && (country.name.toLowerCase().indexOf(search) === 0 || search === country.code.toLowerCase())) {
+                    resultsUl.append($('<li><button data-code="' + country.code + '" class="menu-button add-button">&plus;</button>' + country.name + '</li>'));
+                    usedCodes[country.code]={};
+                }
             }
 
             $('button',resultsUl).click(function () {
