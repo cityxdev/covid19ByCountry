@@ -145,7 +145,7 @@ const loadCountryCodes = function() {
     }
 };
 
-const retrieveData = function(countryDataFromServer,covidDataFromServer){
+const retrieveData = function(countryDataFromServer,covidDataFromServer,testingDataFromServer){
     const COLORS = ['#003f5c','#bc5090','#007e7b','#ff6361','#ffa600','#008004','#58508d','#9c3600'];
 
     const data = {};
@@ -159,7 +159,8 @@ const retrieveData = function(countryDataFromServer,covidDataFromServer){
                 popYear:popElem["Year"],
                 conf:{},
                 dead:{},
-                reco:{}
+                reco:{},
+                test:{}
             }
         }
     }
@@ -196,17 +197,81 @@ const retrieveData = function(countryDataFromServer,covidDataFromServer){
         }
     }
 
+    const testDataCountryName2CountryName = function(name){
+        if(name==='United States')
+            return 'US';
+        return name;
+    };
+
+    const shouldDiscardCountryName = function(serverName){
+        switch (serverName) {
+            case 'United States - inconsistent units (COVID Tracking Project)': return true;
+            default: return false;
+        }
+    };
+
+    let testLines = testingDataFromServer.split('\n');
+    let lastDate = undefined, lastCountry=undefined;
+    for(let l = 1 ; l < testLines.length ; l++){
+        let line = testLines[l];
+        let values = line.split(',');
+        let nameFromServer = values[0];
+        if(shouldDiscardCountryName(nameFromServer))
+            continue;
+        let cName = testDataCountryName2CountryName(nameFromServer.split(' - ')[0]);
+        let countryData = data[cName];
+        if(countryData) {
+            if (lastCountry !== cName) {
+                lastCountry = cName;
+                lastDate = undefined;
+            }
+            try{
+                let date = new Date(values[1]);
+
+                if(date<countryData.conf.firstDate)
+                    continue;
+
+                if (!countryData.test.firstDate) {
+                    countryData.test.firstDate = date;
+                    countryData.test.data = [];
+                }
+                if(countryData.test.data.length>daysBetween(countryData.test.firstDate,new Date()))
+                    continue;
+
+                let dateDelta = (lastDate?daysBetween(lastDate, date):0);
+                if(dateDelta>1)
+                    for (let i = 0; i < dateDelta ; i++)
+                        countryData.test.data.push(null);
+
+                try {
+                    countryData.test.data.push(values[5]&&values[5].trim()!==''?Number(values[5]):null);
+                }catch (e) {
+                    console.log(e);
+                    countryData.test.data.push(null);
+                }
+                lastDate = date;
+            }catch (e) {
+                console.log(e);
+            }
+        }
+    }
+
+
     data['10%Growth_5Mppl']={
         color:'#FF00FF',
         pop: 5000000,
         conf:{firstDate:new Date('2020-02-15'),data:[100]},
         dead:{firstDate:new Date('2020-02-15'),data:[5]},
-        reco:{firstDate:new Date('2020-02-15'),data:[15]}
+        reco:{firstDate:new Date('2020-02-15'),data:[15]},
+        test:{firstDate:new Date('2020-02-15'),data:[150]}
     };
     for(let i = 1 ; i < daysBetween(data['10%Growth_5Mppl'].conf.firstDate,new Date()) ; i++) {
         data['10%Growth_5Mppl'].conf.data.push(data['10%Growth_5Mppl'].conf.data[i-1]*1.1);
         data['10%Growth_5Mppl'].dead.data.push(data['10%Growth_5Mppl'].conf.data[i]*0.05);
         data['10%Growth_5Mppl'].reco.data.push(data['10%Growth_5Mppl'].conf.data[i]*0.15);
+    }
+    for(let i = 1 ; i < daysBetween(data['10%Growth_5Mppl'].test.firstDate,new Date()) ; i++) {
+        data['10%Growth_5Mppl'].test.data.push(data['10%Growth_5Mppl'].test.data[i-1]*1.15);
     }
 
     return data;
@@ -237,12 +302,18 @@ const prepareData = function(data) {
             country.deadPerConf.data.push(country.dead.data[i] / country.conf.data[i + daysBetweenConfAndDead] * 100);
         }
 
-
         country.recoPerConf = {firstDate: country.reco.firstDate, data: []};
         for (let i = 0; i < country.reco.data.length; i++) {
             const daysBetweenConfAndReco = daysBetween(country.conf.firstDate, country.reco.firstDate);
             country.recoPerConf.data.push(country.reco.data[i] / country.conf.data[i + daysBetweenConfAndReco] * 100);
         }
+
+        country.testPerMega = {firstDate: country.test.firstDate, data: []};
+        for (let i = 0; i < (country.test.data?country.test.data.length:0) ; i++) {
+                let absValue = country.test.data[i];
+
+                country.testPerMega.data.push(absValue===null||absValue===undefined ? null : absValue/megas);
+            }
     }
 };
 
@@ -290,11 +361,11 @@ const drawChart = function(elemId,data,countryColors) {
             chart.scrollbarX.series.push(series);
 
         if(isRealData) {
-            const circleBullet = new am4charts.CircleBullet();
+            const circleBullet = new am4core.Circle();
             circleBullet.fill = am4core.color(countryColors[countryCode]);
-            circleBullet.circle.stroke = am4core.color("#fff");
-            circleBullet.circle.strokeWidth = 1;
-            circleBullet.circle.radius = 4;
+            circleBullet.stroke = am4core.color("#fff");
+            circleBullet.strokeWidth = 1;
+            circleBullet.radius = 4;
             series.bullets.push(circleBullet);
         }
     }
@@ -311,11 +382,11 @@ const drawChart = function(elemId,data,countryColors) {
 };
 
 const createCharts = function(data) {
-    let confData = [], deadData = [], deadPerConfData = [], recoPerConfData = [];
+    let confData = [], deadData = [], deadPerConfData = [], recoPerConfData = [], testData = [];
 
     let countries = {};
 
-    let confMaxDelta=0, suspMaxDelta=0, deadMaxDelta=0, recoMaxDelta=0;
+    let confMaxDelta=0, deadMaxDelta=0, recoMaxDelta=0, testMaxDelta=0;
 
     let countryColors={};
 
@@ -326,6 +397,10 @@ const createCharts = function(data) {
         const confStartIndex = daysBetween(country.first100ConfDate,country.conf.firstDate)-1;
         const confEndIndex = country.conf.data.length-1;
         confMaxDelta = confMaxDelta=Math.max(confMaxDelta,confEndIndex-confStartIndex);
+
+        const testStartIndex = daysBetween(country.first100ConfDate,country.test.firstDate)-1;
+        const testEndIndex = country.test.data?country.test.data.length-1:0;
+        testMaxDelta=!Number.isNaN(testStartIndex)&&!Number.isNaN(testEndIndex)?Math.max(testMaxDelta,testEndIndex-testStartIndex):testMaxDelta;
 
         const deadStartIndex = country.first100ConfDate < country.dead.firstDate
             ? 0
@@ -346,7 +421,10 @@ const createCharts = function(data) {
             deadEndIndex: deadEndIndex,
 
             recoStartIndex: recoStartIndex,
-            recoEndIndex: recoEndIndex
+            recoEndIndex: recoEndIndex,
+
+            testStartIndex: testStartIndex,
+            testEndIndex: testEndIndex,
         };
     }
 
@@ -402,10 +480,25 @@ const createCharts = function(data) {
         recoPerConfData.push(elem);
     }
 
+    for(let count = 0 ; count<=testMaxDelta ; count++) {
+        const elem = {
+            day: count
+        };
+        for (let countryCode in data) {
+            let country = data[countryCode];
+            elem[countryCode] = countries[countryCode].testStartIndex+count<=countries[countryCode].testEndIndex
+                ? country.testPerMega.data[countries[countryCode].testStartIndex+count]
+                : null;
+        }
+        testData.push(elem);
+    }
+
     drawChart('conf_chart', confData, countryColors);
     drawChart('dead_chart', deadData, countryColors);
     drawChart('dead_per_conf_chart', deadPerConfData, countryColors);
     drawChart('reco_per_conf_chart', recoPerConfData, countryColors);
+    drawChart('test_chart', testData, countryColors);
+
 };
 
 const reload = function(){
@@ -420,27 +513,34 @@ const reload = function(){
             cache4js.ajaxCache({
                 url:'https://pomber.github.io/covid19/timeseries.json',
                 success: function (codvidDataFromServer) {
-                    $('#choose_countries_button').click(function () {
-                        $('#choose_countries_modal').trigger('open');
-                        onModalOpen();
-                    });
+                    cache4js.ajaxCache({
+                        url: 'https://raw.githubusercontent.com/owid/covid-19-data/master/public/data/testing/covid-testing-all-observations.csv',
+                        success: function (testingDataFromServer) {
+                            $('#choose_countries_button').click(function () {
+                                $('#choose_countries_modal').trigger('open');
+                                onModalOpen();
+                            });
 
-                    $('#share_button').click(function () {
-                        prompt('Copy and share this URL','https://cityxdev.github.io/covid19ByCountry/?countries='+btoa(JSON.stringify(countryCodes)));
-                    });
+                            $('#share_button').click(function () {
+                                prompt('Copy and share this URL', 'https://cityxdev.github.io/covid19ByCountry/?countries=' + btoa(JSON.stringify(countryCodes)));
+                            });
 
-                    hideLoader();
+                            hideLoader();
 
-                    loadCountries(countryDataFromServer,codvidDataFromServer);
+                            loadCountries(countryDataFromServer, codvidDataFromServer);
 
-                    loadCountryCodes();
+                            loadCountryCodes();
 
-                    let data = retrieveData(countryDataFromServer,codvidDataFromServer);
-                    prepareData(data);
-                    am4core.ready(function () {
-                        am4core.useTheme(am4themes_material);
-                        createCharts(data);
-                    });
+                            let data = retrieveData(countryDataFromServer, codvidDataFromServer,testingDataFromServer);
+                            prepareData(data);
+                            am4core.ready(function () {
+                                am4core.options.queue = true;
+                                am4core.options.onlyShowOnViewport = true;
+                                am4core.useTheme(am4themes_material);
+                                createCharts(data);
+                            });
+                        }
+                    },60*60);
                 }
             },5*60);
         }

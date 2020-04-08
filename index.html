@@ -90,6 +90,15 @@
             <div class="chart-container" id="reco_per_conf_chart"></div>
         </div>
     </div>
+
+    <div class="chart-outer test">
+        <div class="chart-title">
+            <h2>Tests per million inhab</h2>
+        </div>
+        <div class="chart-inner">
+            <div class="chart-container" id="test_chart"></div>
+        </div>
+    </div>
 </div>
 
 <div class="modal" id="choose_countries_modal">
@@ -129,9 +138,13 @@
                     The comparison is made by aligning every data series by the day that the corresponding country reached 100 confirmed cases (day 0). It also compares confirmed cases by million people and not absolute values. This way we are comparing indicators instead of variables.
                     <br/> Of course this is not perfect and does not take into account demography or population density, but it is an effort in that direction.
                 </p>
-                <p>The always present "10%Growth_5Mppl" data series is a model of a 5 million people country, with 100 confirmed cases on day 0 and a consistent growth of 10% per day. It also has consistent fatality and recovery rates of 5% and 15%. Useful for comparison purposes.</p>
+                <p>Data about testing is not easy to get in a usable format, and is not collected for many countries, thus the "Tests per million inhab" may be a bit empty.</p>
+                <p>The always present "10%Growth_5Mppl" data series is a model of a 5 million people country, with 100 confirmed cases on day 0 and a consistent growth of 10% per day. It also has consistent fatality and recovery rates of 5% and 15%. Finally, testing grows 15% per day. Useful for comparison purposes.</p>
                 <br/><br/>
-                <p><b>Sources</b><br/>COVID-19 data: <a target="_blank" href="https://github.com/pomber/covid19">https://github.com/pomber/covid19</a><br/> Population data: <a target="_blank" href="https://datahub.io/core/population">https://datahub.io/core/population</a></p>
+                <p><b>Sources</b>
+                    <br/>COVID-19 data: <a target="_blank" href="https://github.com/pomber/covid19">https://github.com/pomber/covid19</a>
+                    <br/>Country testing data: <a target="_blank" href="https://github.com/owid/covid-19-data">https://github.com/owid/covid-19-data</a>
+                    <br/>Population data: <a target="_blank" href="https://datahub.io/core/population">https://datahub.io/core/population</a></p>
                 <br/>
                 <p>For any questions or suggestions, please contact: cityxdev@gmail.com</p>
 
