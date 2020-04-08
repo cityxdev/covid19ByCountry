@@ -55,7 +55,7 @@ button{
 div.menu{
     text-align: right;
 }
-#choose_countries_button{
+#choose_countries_button, #share_button{
     background-color: #000091;
     color: #FFFFFF;
 }

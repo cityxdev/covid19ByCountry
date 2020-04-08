@@ -77,6 +77,19 @@ const hideLoader = function () {
 
 
 
+const getURLParamValue = function (parameterName) {
+    var result = null,
+        tmp = [];
+    location.search
+        .substr(1)
+        .split("&")
+        .forEach(function (item) {
+            tmp = item.split("=");
+            if (tmp[0] === parameterName) result = decodeURIComponent(tmp[1]);
+        });
+    return result;
+};
+
 
 
 const COUNTRY_CODES_CACHE_KEY = 'countryCodes';
@@ -108,9 +121,20 @@ const loadCountries = function(countryDataFromServer,covidDataFromServer){
 
 const loadCountryCodes = function() {
     countryCodes=[];
-    let countryCodesTmp = cache4js.getCache(COUNTRY_CODES_CACHE_KEY,function () {
-        return ['PRT','ESP','ITA'];
-    }).slice(0,5);
+    let countryCodesTmp = [];
+
+    let urlCountries = getURLParamValue('countries');
+    if(urlCountries){
+        try {
+            countryCodesTmp = JSON.parse(atob(urlCountries)).slice(0, 5);
+        }catch (e) {
+            console.log(e);
+        }
+    }
+
+    if(!countryCodesTmp || countryCodesTmp.length===0)
+        countryCodesTmp = cache4js.loadCache(COUNTRY_CODES_CACHE_KEY,['PRT','ESP','ITA']).slice(0,5);
+
     for(let cIndex in countryCodesTmp){
         for(let ac in allCountries){
             if(allCountries[ac].code===countryCodesTmp[cIndex]){
@@ -223,7 +247,7 @@ const prepareData = function(data) {
 };
 
 const drawChart = function(elemId,data,countryColors) {
-    let mobile = getHeight()>850;
+    let mobile = getHeight()<850;
 
     if(charts[elemId])
         charts[elemId].dispose();
@@ -241,7 +265,7 @@ const drawChart = function(elemId,data,countryColors) {
     valueAxis.fontSize=mobile?10:12;
 
 
-    if(mobile)
+    if(!mobile)
         chart.scrollbarX = new am4charts.XYChartScrollbar();
 
     for(let countryCode in countryColors){
@@ -262,7 +286,7 @@ const drawChart = function(elemId,data,countryColors) {
             series.strokeWidth = 1;
         }
 
-        if(mobile)
+        if(!mobile)
             chart.scrollbarX.series.push(series);
 
         if(isRealData) {
@@ -400,6 +424,11 @@ const reload = function(){
                         $('#choose_countries_modal').trigger('open');
                         onModalOpen();
                     });
+
+                    $('#share_button').click(function () {
+                        prompt('Copy and share this URL','https://cityxdev.github.io/covid19ByCountry/?countries='+btoa(JSON.stringify(countryCodes)));
+                    });
+
                     hideLoader();
 
                     loadCountries(countryDataFromServer,codvidDataFromServer);
