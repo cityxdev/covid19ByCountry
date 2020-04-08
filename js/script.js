@@ -80,7 +80,6 @@ const hideLoader = function () {
 
 
 const COUNTRY_CODES_CACHE_KEY = 'countryCodes';
-const COUNTRY_CODES_CACHE_EXPIRE = 24*60*60;
 
 const SERIES_ALIGNMENT_MINIMUM = 100;
 
@@ -111,7 +110,7 @@ const loadCountryCodes = function() {
     countryCodes=[];
     let countryCodesTmp = cache4js.getCache(COUNTRY_CODES_CACHE_KEY,function () {
         return ['PRT','ESP','ITA'];
-    },COUNTRY_CODES_CACHE_EXPIRE).slice(0,5);
+    }).slice(0,5);
     for(let cIndex in countryCodesTmp){
         for(let ac in allCountries){
             if(allCountries[ac].code===countryCodesTmp[cIndex]){
@@ -283,7 +282,8 @@ const drawChart = function(elemId,data,countryColors) {
 
     chart.legend = new am4charts.Legend();
     chart.legend.fontSize=mobile?8:12;
-    chart.legend.maxHeight=70;
+    if(!mobile)
+        chart.legend.maxHeight=70;
 };
 
 const createCharts = function(data) {
@@ -483,7 +483,7 @@ const onModalOpen = function() {
         let apply = function(){
             let codes = $('#active_countries').data('codes').slice();
             countryCodes=codes;
-            cache4js.storeCache(COUNTRY_CODES_CACHE_KEY,countryCodes,COUNTRY_CODES_CACHE_EXPIRE);
+            cache4js.storeCache(COUNTRY_CODES_CACHE_KEY,countryCodes);
             reload();
         };
         setTimeout(function (){
