@@ -224,6 +224,8 @@ const prepareData = function(data) {
 };
 
 const drawChart = function(elemId,data,countryColors) {
+    let mobile = getHeight()>850;
+
     if(charts[elemId])
         charts[elemId].dispose();
     const chart = am4core.create(elemId, am4charts.XYChart);
@@ -233,15 +235,14 @@ const drawChart = function(elemId,data,countryColors) {
 
     let categoryAxis = chart.xAxes.push(new am4charts.CategoryAxis());
     categoryAxis.dataFields.category = "day";
-    categoryAxis.fontSize=12;
+    categoryAxis.fontSize=mobile?10:12;
     categoryAxis.title.text='days from the 100th confirmed case';
 
     let valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
-    valueAxis.fontSize=12;
+    valueAxis.fontSize=mobile?10:12;
 
-    let includeScrollbar = getHeight()>850;
 
-    if(includeScrollbar)
+    if(mobile)
         chart.scrollbarX = new am4charts.XYChartScrollbar();
 
     for(let countryCode in countryColors){
@@ -262,7 +263,7 @@ const drawChart = function(elemId,data,countryColors) {
             series.strokeWidth = 1;
         }
 
-        if(includeScrollbar)
+        if(mobile)
             chart.scrollbarX.series.push(series);
 
         if(isRealData) {
@@ -281,8 +282,8 @@ const drawChart = function(elemId,data,countryColors) {
     chart.data = data;
 
     chart.legend = new am4charts.Legend();
-    chart.legend.fontSize=12;
-    chart.legend.maxHeight=50;
+    chart.legend.fontSize=mobile?10:12;
+    chart.legend.maxHeight=70;
 };
 
 const createCharts = function(data) {
