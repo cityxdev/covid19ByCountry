@@ -282,7 +282,7 @@ const drawChart = function(elemId,data,countryColors) {
     chart.data = data;
 
     chart.legend = new am4charts.Legend();
-    chart.legend.fontSize=mobile?10:12;
+    chart.legend.fontSize=mobile?8:12;
     chart.legend.maxHeight=70;
 };
 
