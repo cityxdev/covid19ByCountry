@@ -93,7 +93,7 @@ const loadCountries = function(countryDataFromServer,covidDataFromServer){
 const loadCountryCodes = function() {
     countryCodes=[];
     let countryCodesTmp = cache4js.getCache(COUNTRY_CODES_CACHE_KEY,function () {
-        return ['PRT','ESP','ITA','GBR','USA'];
+        return ['PRT','ESP','ITA'];
     },COUNTRY_CODES_CACHE_EXPIRE).slice(0,5);
     for(let cIndex in countryCodesTmp){
         for(let ac in allCountries){
