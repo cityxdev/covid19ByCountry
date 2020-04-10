@@ -109,6 +109,8 @@ const SERIES_ALIGNMENT_MINIMUM = 100;
 const DYNAMIC_DATA_EXPIRE_SECS = 15*60;
 const STATIC_DATA_EXPIRE_SECS = 5*60*60;
 
+const MAX_SERIES = 7;
+
 
 
 let countryCodes = [];
@@ -150,14 +152,14 @@ const loadCountryCodes = function() {
     let urlCountries = getURLParamValue('countries');
     if(urlCountries){
         try {
-            countryCodesTmp = JSON.parse(atob(urlCountries)).slice(0, 5);
+            countryCodesTmp = JSON.parse(atob(urlCountries)).slice(0, MAX_SERIES);
         }catch (e) {
             console.log(e);
         }
     }
 
     if(!countryCodesTmp || countryCodesTmp.length===0)
-        countryCodesTmp = cache4js.loadCache(COUNTRY_CODES_CACHE_KEY,['PRT','ESP','ITA']).slice(0,5);
+        countryCodesTmp = cache4js.loadCache(COUNTRY_CODES_CACHE_KEY,['PRT','ESP','ITA']).slice(0,MAX_SERIES);
 
     for(let cIndex in countryCodesTmp){
         for(let ac in allCountries){
@@ -665,8 +667,8 @@ const onModalOpen = function() {
 
             $('button',resultsUl).click(function () {
                 let codes = $('#active_countries').data('codes').slice();
-                if(codes.length>=5)
-                    alert("You can only add 5 countries.");
+                if(codes.length>=MAX_SERIES)
+                    alert('You can only add up to '+MAX_SERIES+' countries.');
                 else {
                     codes.push($(this).data('code'));
                     $('#active_countries').data('codes',codes);
