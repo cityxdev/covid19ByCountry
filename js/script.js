@@ -21,6 +21,16 @@ var isIE = navigator.sayswho.indexOf('IE')===0;
 var isEdge = navigator.sayswho.indexOf('Edge')===0;
 
 
+const localeCompareStrings = function( a, b ) {
+    if(!a&&!b)
+        return 0;
+    if(!a)
+        return-1;
+    if (!b)
+        return 1;
+    return a.toLowerCase().localeCompare(b.toLowerCase());
+};
+
 
 const getWidth=function() {
     return isMobile() ? screen.width : window.innerWidth;
@@ -96,27 +106,41 @@ const COUNTRY_CODES_CACHE_KEY = 'countryCodes';
 
 const SERIES_ALIGNMENT_MINIMUM = 100;
 
+const DYNAMIC_DATA_EXPIRE_SECS = 15*60;
+const STATIC_DATA_EXPIRE_SECS = 5*60*60;
+
+
 
 let countryCodes = [];
 let allCountries = [];
 let charts = {};
 
-const transformCountryName = function(name) {
-    if(name==='United States')
-        return 'US';
-    return name;
-};
 
 const loadCountries = function(countryDataFromServer,covidDataFromServer){
+    const transformCountryName = function(name) {
+        if(name==='United States')
+            return 'US';
+        return name;
+    };
+
     let visitedCountries = {};
     for(let e in countryDataFromServer){
         const popElem = countryDataFromServer[e];
         const name = transformCountryName(popElem["Country Name"]);
-        if(covidDataFromServer[name] && !visitedCountries[name]){
-            allCountries.push({code: popElem["Country Code"],name: name});
-            visitedCountries[name]={};
+        if(covidDataFromServer[name] && !visitedCountries[name])
+            visitedCountries[name]={code: popElem["Country Code"],name: name, pop: undefined, popYear: undefined};
+
+        if(visitedCountries[name] &&
+            (visitedCountries[name].popYear===undefined || visitedCountries[name].pop===undefined || visitedCountries[name].popYear<popElem["Year"])){
+            visitedCountries[name].pop=popElem["Value"];
+            visitedCountries[name].popYear=popElem["Year"];
         }
     }
+    allCountries=[];
+    let allCodes = Object.keys(visitedCountries);
+    allCodes.sort(localeCompareStrings);
+    for(let c in allCodes)
+        allCountries.push(visitedCountries[allCodes[c]]);
 };
 
 const loadCountryCodes = function() {
@@ -145,173 +169,235 @@ const loadCountryCodes = function() {
     }
 };
 
-const retrieveData = function(countryDataFromServer,covidDataFromServer,testingDataFromServer){
-    const COLORS = ['#003f5c','#bc5090','#007e7b','#ff6361','#ffa600','#008004','#58508d','#9c3600'];
-
-    const data = {};
-    for(let e in countryDataFromServer){
-        const popElem = countryDataFromServer[e];
-        const name = transformCountryName(popElem["Country Name"]);
-        if(countryCodes.indexOf(popElem["Country Code"])>=0
-            && (!data[name] || data[name].popYear<popElem["Year"])){
-            data[name]={
-                pop:popElem["Value"],
-                popYear:popElem["Year"],
-                conf:{},
-                dead:{},
-                reco:{},
-                test:{}
-            }
-        }
-    }
-    let count = 0;
-    for(let cName in data)
-        data[cName].color=COLORS[count++];
-
-    for(let cName in data){
-        let countryData = data[cName];
-        let covidDataElem = covidDataFromServer[cName];
-        for(let i = 0 ; i < covidDataElem.length ; i++){
-            let entry = covidDataElem[i];
-            if(entry.confirmed>0){
-                if(!countryData.conf.firstDate){
-                    countryData.conf.firstDate=new Date(entry.date);
-                    countryData.conf.data=[];
-                }
-                countryData.conf.data.push(entry.confirmed);
-            }
-            if(entry.deaths>0){
-                if(!countryData.dead.firstDate){
-                    countryData.dead.firstDate=new Date(entry.date);
-                    countryData.dead.data=[];
-                }
-                countryData.dead.data.push(entry.deaths);
-            }
-            if(entry.recovered>0){
-                if(!countryData.reco.firstDate){
-                    countryData.reco.firstDate=new Date(entry.date);
-                    countryData.reco.data=[];
-                }
-                countryData.reco.data.push(entry.recovered);
-            }
-        }
-    }
-
-    const testDataCountryName2CountryName = function(name){
-        if(name==='United States')
+const retrieveTestingDataFromOWID = function(from, to) {
+    const dataSourceCountryName2CountryName = function (dataSourceCountryName) {
+        if (dataSourceCountryName === 'United States')
             return 'US';
-        return name;
+        return dataSourceCountryName;
     };
 
-    const shouldDiscardCountryName = function(serverName){
-        switch (serverName) {
-            case 'United States - inconsistent units (COVID Tracking Project)': return true;
-            default: return false;
+    const shouldDiscardCountry = function (dataSourceCountryName) {
+        switch (dataSourceCountryName) {
+            case 'United States - inconsistent units (COVID Tracking Project)':
+                return true;
+            default:
+                return false;
         }
     };
+    let existent = [];
+    for (let cName in to)
+        if(to[cName].test.data)
+            existent.push(cName);
 
-    let testLines = testingDataFromServer.split('\n');
-    let lastDate = undefined, lastCountry=undefined;
-    for(let l = 1 ; l < testLines.length ; l++){
+    let testLines = from.split('\n');
+    let lastDate = undefined, lastCountry = undefined;
+    for (let l = 1; l < testLines.length; l++) {
         let line = testLines[l];
         let values = line.split(',');
         let nameFromServer = values[0];
-        if(shouldDiscardCountryName(nameFromServer))
+        if (shouldDiscardCountry(nameFromServer))
             continue;
-        let cName = testDataCountryName2CountryName(nameFromServer.split(' - ')[0]);
-        let countryData = data[cName];
-        if(countryData) {
+        let cName = dataSourceCountryName2CountryName(nameFromServer.split(' - ')[0]);
+
+        if(existent.indexOf(cName)>=0)
+            continue;
+
+        let countryData = to[cName];
+        if (countryData) {
             if (lastCountry !== cName) {
                 lastCountry = cName;
                 lastDate = undefined;
             }
-            try{
+            try {
                 let date = new Date(values[1]);
 
-                if(date<countryData.conf.firstDate)
+                if (date < countryData.first100ConfDate)
                     continue;
 
-                if (!countryData.test.firstDate) {
-                    countryData.test.firstDate = date;
+                if (!countryData.test.data) {
                     countryData.test.data = [];
+                    countryData.test.firstDate=date;
+                } else {
+                    let dateDelta = (lastDate ? daysBetween(lastDate, date) : 0);
+                    if (dateDelta > 1)
+                        for (let i = 1; i < dateDelta; i++)
+                            countryData.test.data.push(null);
                 }
-                if(countryData.test.data.length>daysBetween(countryData.test.firstDate,new Date()))
-                    continue;
-
-                let dateDelta = (lastDate?daysBetween(lastDate, date):0);
-                if(dateDelta>1)
-                    for (let i = 1; i < dateDelta ; i++)
-                        countryData.test.data.push(null);
 
                 try {
-                    countryData.test.data.push(values[5]&&values[5].trim()!==''?Number(values[5]):null);
-                }catch (e) {
+                    countryData.test.data.push(values[5] && values[5].trim() !== '' ? Number(values[5]) : null);
+                } catch (e) {
                     console.log(e);
                     countryData.test.data.push(null);
                 }
                 lastDate = date;
-            }catch (e) {
+            } catch (e) {
                 console.log(e);
             }
         }
     }
 
+    for (let cName in to) {
+        let country = to[cName];
+        for(let d = 0 ; d < daysBetween(country.test.firstDate,country.first100ConfDate) ; d++)
+            country.test.data.unshift(null);
+    }
+};
 
-    data['10%Growth_5Mppl']={
-        color:'#FF00FF',
-        pop: 5000000,
-        conf:{firstDate:new Date('2020-02-15'),data:[100]},
-        dead:{firstDate:new Date('2020-02-15'),data:[5]},
-        reco:{firstDate:new Date('2020-02-15'),data:[15]},
-        test:{firstDate:new Date('2020-02-15'),data:[150]}
+const retrieveTestingDateFromWikiData = function(from, to){
+    const shouldDiscardCountry = function (dataSourceCountryName) {
+        switch (dataSourceCountryName) {
+            case 'Italy':
+                return true;
+            default:
+                return false;
+        }
     };
-    for(let i = 1 ; i < daysBetween(data['10%Growth_5Mppl'].conf.firstDate,new Date()) ; i++) {
-        data['10%Growth_5Mppl'].conf.data.push(data['10%Growth_5Mppl'].conf.data[i-1]*1.1);
-        data['10%Growth_5Mppl'].dead.data.push(data['10%Growth_5Mppl'].conf.data[i]*0.05);
-        data['10%Growth_5Mppl'].reco.data.push(data['10%Growth_5Mppl'].conf.data[i]*0.15);
+
+    let lastDate = undefined;
+    for(let e in from.results.bindings){
+        let entry = from.results.bindings[e];
+        let cName = entry.countryLabel.value;
+
+        if(shouldDiscardCountry(cName))
+            continue;
+
+        let country = to[cName];
+        if(country){
+            let date = new Date(entry.date.value);
+
+            if (date < country.first100ConfDate)
+                continue;
+
+            if (!country.test.data) {
+                country.test.data = [];
+                country.test.firstDate=date;
+            } else {
+                let dateDelta = (lastDate ? daysBetween(lastDate, date) : 0);
+                if (dateDelta > 1)
+                    for (let i = 1; i < dateDelta; i++)
+                        country.test.data.push(null);
+            }
+
+            try {
+                country.test.data.push(
+                    entry.testNo.value!==null&&entry.testNo.value!==undefined&&entry.testNo.value.trim()!==''
+                        ? Number(entry.testNo.value)
+                        : null
+                );
+            } catch (e) {
+                console.log(e);
+                country.test.data.push(null);
+            }
+            lastDate = date;
+        }
     }
-    for(let i = 1 ; i < daysBetween(data['10%Growth_5Mppl'].test.firstDate,new Date()) ; i++) {
-        data['10%Growth_5Mppl'].test.data.push(data['10%Growth_5Mppl'].test.data[i-1]*1.15);
+
+    for (let cName in to) {
+        let country = to[cName];
+        for(let d = 0 ; d < daysBetween(country.test.firstDate,country.first100ConfDate) ; d++)
+            country.test.data.unshift(null);
     }
+};
+
+const retrieveDataFromPomber = function(from, to) {
+    for (let cName in to) {
+        let countryData = to[cName];
+        let covidDataElem = from[cName];
+        for (let i = 0; i < covidDataElem.length; i++) {
+            let entry = covidDataElem[i];
+
+            if (entry.confirmed >= SERIES_ALIGNMENT_MINIMUM) {
+
+                if (!countryData.conf.data) {
+                    countryData.first100ConfDate=new Date(entry.date);
+                    countryData.conf.data = [];
+                    countryData.dead.data = [];
+                    countryData.reco.data = [];
+                }
+
+                countryData.conf.data.push(entry.confirmed);
+                countryData.dead.data.push(!entry.deaths?0:entry.deaths);
+                countryData.reco.data.push(!entry.recovered?0:entry.recovered);
+            }
+        }
+    }
+};
+
+const generateModelData = function(data) {
+    let modelName = '10%Growth_5Mppl';
+    data[modelName] = {
+        first100ConfDate: new Date('2020-02-15'),
+        color: '#FF00FF',
+        pop: 5000000,
+        conf: {data: [100]},
+        dead: {data: [5]},
+        reco: {data: [15]},
+        test: {data: [500]}
+    };
+    for (let i = 1; i < daysBetween(data[modelName].first100ConfDate, new Date()); i++) {
+        data[modelName].conf.data.push(data[modelName].conf.data[i - 1] * 1.1);
+        data[modelName].dead.data.push(data[modelName].conf.data[i] * 0.05);
+        data[modelName].reco.data.push(data[modelName].conf.data[i] * 0.15);
+        data[modelName].test.data.push(data[modelName].test.data[i - 1] * 1.10);
+    }
+};
+
+const retrieveData = function(covidDataFromPomber,testingDataFromWikiData,testingDataFromOWID){
+    const COLORS = ['#003f5c','#bc5090','#007e7b','#ff6361','#ffa600','#008004','#58508d','#9c3600'];
+
+    const data = {};
+    for(let c in allCountries){
+        const country = allCountries[c];
+        const name = country.name;
+        if(countryCodes.indexOf(country.code)>=0)
+            data[name]={
+                pop:country.pop,
+                conf:{},
+                dead:{},
+                reco:{},
+                test:{}
+            };
+    }
+    let count = 0;
+    for(let cName in data)
+        data[cName].color=COLORS[count++];
+
+    retrieveDataFromPomber(covidDataFromPomber, data);
+
+    retrieveTestingDateFromWikiData(testingDataFromWikiData, data);
+    retrieveTestingDataFromOWID(testingDataFromOWID, data);
+
+    generateModelData(data);
 
     return data;
 };
 
-const prepareData = function(data) {
-    for (let countryCode in data) {
-        let country = data[countryCode];
-        let megas = country.pop / 1000000;
+const generateWeightedData = function(data) {
+    for (let cName in data) {
+        let country = data[cName];
+        let megas = country.pop / 1000000.0;
 
-        for (let i = 0; i < country.conf.data.length; i++)
-            if (country.conf.data[i] >= SERIES_ALIGNMENT_MINIMUM) {
-                country.first100ConfDate = country.conf.firstDate.plusDays(i + 1);
-                break;
-            }
-
-        country.confPerMega = {firstDate: country.conf.firstDate, data: []};
+        country.confPerMega = {data: []};
         for (let i = 0; i < country.conf.data.length; i++)
             country.confPerMega.data.push(country.conf.data[i] / megas);
 
-        country.deadPerMega = {firstDate: country.dead.firstDate, data: []};
+        country.deadPerMega = {data: []};
         for (let i = 0; i < country.dead.data.length; i++)
             country.deadPerMega.data.push(country.dead.data[i] / megas);
 
-        country.deadPerConf = {firstDate: country.dead.firstDate, data: []};
-        for (let i = 0; i < country.dead.data.length; i++) {
-            const daysBetweenConfAndDead = daysBetween(country.conf.firstDate, country.dead.firstDate);
-            country.deadPerConf.data.push(country.dead.data[i] / country.conf.data[i + daysBetweenConfAndDead] * 100);
-        }
+        country.deadPerConf = {data: []};
+        for (let i = 0; i < country.dead.data.length; i++)
+            country.deadPerConf.data.push(country.dead.data[i] / country.conf.data[i] * 100);
 
-        country.recoPerConf = {firstDate: country.reco.firstDate, data: []};
+        country.recoPerConf = {data: []};
         for (let i = 0; i < country.reco.data.length; i++) {
-            const daysBetweenConfAndReco = daysBetween(country.conf.firstDate, country.reco.firstDate);
-            country.recoPerConf.data.push(country.reco.data[i] / country.conf.data[i + daysBetweenConfAndReco] * 100);
+            country.recoPerConf.data.push(country.reco.data[i] / country.conf.data[i] * 100);
         }
 
-        country.testPerMega = {firstDate: country.test.firstDate, data: []};
+        country.testPerMega = {data: []};
         for (let i = 0; i < (country.test.data?country.test.data.length:0) ; i++) {
-            let absValue = country.test.data[i];
-
+            const absValue = country.test.data[i];
             country.testPerMega.data.push(absValue===null||absValue===undefined ? null : absValue/megas);
         }
     }
@@ -383,111 +469,75 @@ const drawChart = function(elemId,data,countryColors) {
 
 const createCharts = function(data) {
     let confData = [], deadData = [], deadPerConfData = [], recoPerConfData = [], testData = [];
-
-    let countries = {};
-
-    let confMaxDelta=0, deadMaxDelta=0, recoMaxDelta=0, testMaxDelta=0;
-
+    let confMaxDelta=0;
     let countryColors={};
 
-    for (let countryCode in data) {
-        let country = data[countryCode];
-        countryColors[countryCode]=data[countryCode].color;
-
-        const confStartIndex = daysBetween(country.first100ConfDate,country.conf.firstDate)-1;
-        const confEndIndex = country.conf.data.length-1;
-        confMaxDelta = confMaxDelta=Math.max(confMaxDelta,confEndIndex-confStartIndex);
-
-        const testStartIndex = daysBetween(country.first100ConfDate,country.test.firstDate)-1;
-        const testEndIndex = country.test.data?country.test.data.length-1:0;
-        testMaxDelta=!Number.isNaN(testStartIndex)&&!Number.isNaN(testEndIndex)?Math.max(testMaxDelta,testEndIndex-testStartIndex):testMaxDelta;
-
-        const deadStartIndex = country.first100ConfDate < country.dead.firstDate
-            ? 0
-            : daysBetween(country.first100ConfDate,country.dead.firstDate)-1;
-        const recoStartIndex = country.first100ConfDate < country.reco.firstDate
-            ? 0
-            : daysBetween(country.first100ConfDate,country.reco.firstDate)-1;
-        const deadEndIndex = country.dead.data.length-1;
-        const recoEndIndex = country.reco.data.length-1;
-        deadMaxDelta = deadMaxDelta=Math.max(deadMaxDelta,deadEndIndex-deadStartIndex);
-        recoMaxDelta = recoMaxDelta=Math.max(recoMaxDelta,recoEndIndex-recoStartIndex);
-
-        countries[countryCode] = {
-            confStartIndex: confStartIndex,
-            confEndIndex: confEndIndex,
-
-            deadStartIndex: deadStartIndex,
-            deadEndIndex: deadEndIndex,
-
-            recoStartIndex: recoStartIndex,
-            recoEndIndex: recoEndIndex,
-
-            testStartIndex: testStartIndex,
-            testEndIndex: testEndIndex,
-        };
+    for (let cName in data) {
+        let country = data[cName];
+        countryColors[cName]=data[cName].color;
+        confMaxDelta = confMaxDelta=Math.max(confMaxDelta,country.conf.data.length-1);
     }
 
     for(let count = 0 ; count<=confMaxDelta ; count++) {
         const elem = {
             day: count
         };
-        for (let countryCode in data) {
-            let country = data[countryCode];
-            elem[countryCode] = countries[countryCode].confStartIndex+count<=countries[countryCode].confEndIndex
-                ? country.confPerMega.data[countries[countryCode].confStartIndex+count]
+        for (let cName in data) {
+            let country = data[cName];
+            elem[cName] = count<country.confPerMega.data.length
+                ? country.confPerMega.data[count]
                 : null;
         }
         confData.push(elem);
     }
 
-    for(let count = 0 ; count<=deadMaxDelta ; count++) {
+    for(let count = 0 ; count<=confMaxDelta ; count++) {
         const elem = {
             day: count
         };
-        for (let countryCode in data) {
-            let country = data[countryCode];
-            elem[countryCode] = countries[countryCode].deadStartIndex+count<=countries[countryCode].deadEndIndex
-                ? country.deadPerMega.data[countries[countryCode].deadStartIndex+count]
+        for (let cName in data) {
+            let country = data[cName];
+            elem[cName] = count<country.deadPerMega.data.length
+                ? country.deadPerMega.data[count]
                 : null;
         }
         deadData.push(elem);
     }
 
-    for(let count = 0 ; count<=deadMaxDelta ; count++) {
+    for(let count = 0 ; count<=confMaxDelta ; count++) {
         const elem = {
             day: count
         };
-        for (let countryCode in data) {
-            let country = data[countryCode];
-            elem[countryCode] = countries[countryCode].deadStartIndex+count<=countries[countryCode].deadEndIndex
-                ? country.deadPerConf.data[countries[countryCode].deadStartIndex+count]
+        for (let cName in data) {
+            let country = data[cName];
+            elem[cName] = count<country.deadPerConf.data.length
+                ? country.deadPerConf.data[count]
                 : null;
         }
         deadPerConfData.push(elem);
     }
 
-    for(let count = 0 ; count<=recoMaxDelta ; count++) {
+    for(let count = 0 ; count<=confMaxDelta ; count++) {
         const elem = {
             day: count
         };
-        for (let countryCode in data) {
-            let country = data[countryCode];
-            elem[countryCode] = countries[countryCode].recoStartIndex+count<=countries[countryCode].recoEndIndex
-                ? country.recoPerConf.data[countries[countryCode].recoStartIndex+count]
+        for (let cName in data) {
+            let country = data[cName];
+            elem[cName] = count<country.recoPerConf.data.length
+                ? country.recoPerConf.data[count]
                 : null;
         }
         recoPerConfData.push(elem);
     }
 
-    for(let count = 0 ; count<=testMaxDelta ; count++) {
+    for(let count = 0 ; count<=confMaxDelta ; count++) {
         const elem = {
             day: count
         };
-        for (let countryCode in data) {
-            let country = data[countryCode];
-            elem[countryCode] = countries[countryCode].testStartIndex+count<=countries[countryCode].testEndIndex
-                ? country.testPerMega.data[countries[countryCode].testStartIndex+count]
+        for (let cName in data) {
+            let country = data[cName];
+            elem[cName] = count<country.testPerMega.data.length
+                ? country.testPerMega.data[count]
                 : null;
         }
         testData.push(elem);
@@ -501,6 +551,16 @@ const createCharts = function(data) {
 
 };
 
+const makeSPARQLQuery = function( endpointUrl, sparqlQuery, successCallback ) {
+    var settings = {
+        url: endpointUrl,
+        headers: { Accept: 'application/sparql-results+json' },
+        data: { query: sparqlQuery },
+        success: successCallback
+    };
+    return cache4js.ajaxCache(settings, DYNAMIC_DATA_EXPIRE_SECS);
+};
+
 const reload = function(){
     countryCodes = [];
     allCountries = [];
@@ -512,39 +572,55 @@ const reload = function(){
         success: function (countryDataFromServer) {
             cache4js.ajaxCache({
                 url:'https://pomber.github.io/covid19/timeseries.json',
-                success: function (codvidDataFromServer) {
-                    cache4js.ajaxCache({
-                        url: 'https://raw.githubusercontent.com/owid/covid-19-data/master/public/data/testing/covid-testing-all-observations.csv',
-                        success: function (testingDataFromServer) {
-                            $('#choose_countries_button').click(function () {
-                                $('#choose_countries_modal').trigger('open');
-                                onModalOpen();
-                            });
+                success: function (codvidDataFromPomber) {
+                    const testDataEndpoint = 'https://query.wikidata.org/sparql',
+                        testDataSparqlQuery = "SELECT ?date ?testNo ?countryLabel WHERE {\n" +
+                            "  ?item wdt:P361 wd:Q83741704.\n" +
+                            "  ?item p:P8011 ?test. \n" +
+                            "  ?test pq:P585 ?date;\n" +
+                            "    ps:P8011 ?testNo\n" +
+                            "  OPTIONAL { ?item wdt:P17 ?country. }\n" +
+                            "  SERVICE wikibase:label { bd:serviceParam wikibase:language \"[EN],en\". }\n" +
+                            "}\n" +
+                            "ORDER BY (?countryLabel) (?itemLabel) (?date)";
+                    makeSPARQLQuery(
+                        testDataEndpoint,
+                        testDataSparqlQuery,
+                        function( testingDataFromWikiData ) {
+                            cache4js.ajaxCache({
+                                url: 'https://raw.githubusercontent.com/owid/covid-19-data/master/public/data/testing/covid-testing-all-observations.csv',
+                                success: function (testingDataFromOWID) {
+                                    $('#choose_countries_button').click(function () {
+                                        $('#choose_countries_modal').trigger('open');
+                                        onModalOpen();
+                                    });
 
-                            $('#share_button').click(function () {
-                                prompt('Copy and share this URL', 'https://cityxdev.github.io/covid19ByCountry/?countries=' + btoa(JSON.stringify(countryCodes)));
-                            });
+                                    $('#share_button').click(function () {
+                                        prompt('Copy and share this URL', 'https://cityxdev.github.io/covid19ByCountry/?countries=' + btoa(JSON.stringify(countryCodes)));
+                                    });
 
-                            hideLoader();
+                                    hideLoader();
 
-                            loadCountries(countryDataFromServer, codvidDataFromServer);
+                                    loadCountries(countryDataFromServer, codvidDataFromPomber);
 
-                            loadCountryCodes();
+                                    loadCountryCodes();
 
-                            let data = retrieveData(countryDataFromServer, codvidDataFromServer,testingDataFromServer);
-                            prepareData(data);
-                            am4core.ready(function () {
-                                am4core.options.queue = true;
-                                am4core.options.onlyShowOnViewport = true;
-                                am4core.useTheme(am4themes_material);
-                                createCharts(data);
-                            });
+                                    let data = retrieveData(codvidDataFromPomber, testingDataFromWikiData, testingDataFromOWID);
+                                    generateWeightedData(data);
+                                    am4core.ready(function () {
+                                        am4core.options.queue = true;
+                                        am4core.options.onlyShowOnViewport = true;
+                                        am4core.useTheme(am4themes_material);
+                                        createCharts(data);
+                                    });
+                                }
+                            },DYNAMIC_DATA_EXPIRE_SECS);
                         }
-                    },60*60);
+                    );
                 }
-            },5*60);
+            },DYNAMIC_DATA_EXPIRE_SECS);
         }
-    },5*60*60);
+    },STATIC_DATA_EXPIRE_SECS);
 };
 
 const onModalOpen = function() {
