@@ -13,6 +13,37 @@ h1{
 
 div.intro{
     font-size: 16px;
+    margin-right: 10%;
+    margin-left: 10%;
+}
+
+div.menu{
+    margin-right: 10%;
+    text-align: right;
+    margin-bottom: 10px;
+}
+
+div.menu button{
+    font-weight: bold;
+}
+
+label{
+    font-weight: bold;
+}
+
+.day-0 .chart-container,
+.day-0 .chart-desc{
+    background-color: #ddd;
+}
+
+#day_0_dates{
+    padding-top: 10px;
+    font-size: 13px;
+    width: max-content;
+}
+#day_0_dates li{
+    list-style: none;
+    text-align: right;
 }
 
 div.chart-outer{
@@ -56,9 +87,6 @@ button{
     padding-top: 4px;
 }
 
-div.menu{
-    text-align: right;
-}
 #choose_countries_button, #share_button{
     background-color: #000091;
     color: #FFFFFF;

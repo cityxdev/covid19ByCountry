@@ -51,6 +51,12 @@ const isMobile=function() {
 };
 
 
+Number.prototype.pad = function(size) {
+    let s = String(this);
+    while (s.length < (size || 2)) {s = "0" + s;}
+    return s;
+};
+
 
 const daysBetween = function (firstDate, secondDate) {
     const oneDay = 24 * 60 * 60 * 1000; // hours*minutes*seconds*milliseconds
@@ -60,6 +66,9 @@ Date.prototype.plusDays = function(days) {
     var date = new Date(this.valueOf());
     date.setDate(date.getDate() + days);
     return date;
+};
+const formatDate = function (date) {
+    return date.getFullYear() + "/" + (date.getMonth() + 1).pad(2) + "/" + date.getDate().pad(2);
 };
 
 
@@ -113,7 +122,7 @@ const MAX_SERIES = 7;
 
 
 
-let countryCodes = [];
+let chosenCountries = [];
 let allCountries = [];
 let charts = {};
 
@@ -145,8 +154,15 @@ const loadCountries = function(countryDataFromServer,covidDataFromServer){
         allCountries.push(visitedCountries[allCodes[c]]);
 };
 
-const loadCountryCodes = function() {
-    countryCodes=[];
+const countryForCode = function (code) {
+    for(let c in allCountries)
+        if(allCountries[c].code===code)
+            return allCountries[c];
+    return null;
+};
+
+const loadChosenCountries = function() {
+    chosenCountries=[];
     let countryCodesTmp = [];
 
     let urlCountries = getURLParamValue('countries');
@@ -164,7 +180,7 @@ const loadCountryCodes = function() {
     for(let cIndex in countryCodesTmp){
         for(let ac in allCountries){
             if(allCountries[ac].code===countryCodesTmp[cIndex]){
-                countryCodes.push(countryCodesTmp[cIndex]);
+                chosenCountries.push(countryCodesTmp[cIndex]);
                 break;
             }
         }
@@ -353,6 +369,25 @@ const generateModelData = function(data) {
     }
 };
 
+const generateDay0Dates = function(data) {
+    let day0DatesList = $('#day_0_dates').empty();
+    let countries = [];
+    for (let c in chosenCountries) {
+        let country = countryForCode(chosenCountries[c]);
+        country.first100ConfDate=data[country.name].first100ConfDate;
+        countries.push(country);
+    }
+
+    countries.sort(function (a,b) {
+        return localeCompareStrings(a.name,b.name);
+    });
+
+    for (let c in countries) {
+        let country = countries[c];
+        day0DatesList.append('<li><label>' + country.name+ '</label> ' + formatDate(country.first100ConfDate) + '</li>');
+    }
+};
+
 const retrieveData = function(covidDataFromPomber,testingDataFromWikiData,testingDataFromOWID){
     const COLORS = ['#003f5c','#bc5090','#007e7b','#ff6361','#ffa600','#008004','#58508d','#9c3600'];
 
@@ -360,7 +395,7 @@ const retrieveData = function(covidDataFromPomber,testingDataFromWikiData,testin
     for(let c in allCountries){
         const country = allCountries[c];
         const name = country.name;
-        if(countryCodes.indexOf(country.code)>=0)
+        if(chosenCountries.indexOf(country.code)>=0)
             data[name]={
                 pop:country.pop,
                 conf:{},
@@ -379,6 +414,8 @@ const retrieveData = function(covidDataFromPomber,testingDataFromWikiData,testin
     retrieveTestingDataFromOWID(testingDataFromOWID, data);
 
     generateModelData(data);
+
+    generateDay0Dates(data);
 
     return data;
 };
@@ -500,7 +537,6 @@ const drawChart = function(elemId,data,countryColors) {
 };
 
 const createCharts = function(data) {
-    let confData = [], deadData = [], deadPerConfData = [], recoPerConfData = [], testData = [], confPerTestData = [];
     let confMaxDelta=0;
     let countryColors={};
 
@@ -510,7 +546,8 @@ const createCharts = function(data) {
         confMaxDelta = confMaxDelta=Math.max(confMaxDelta,country.conf.data.length-1);
     }
 
-    const generateChartData = function (fromDataName, to) {
+    const generateChartData = function (fromDataName) {
+        let res = [];
         for (let count = 0; count <= confMaxDelta; count++) {
             const elem = {
                 day: count
@@ -521,24 +558,17 @@ const createCharts = function(data) {
                     ? country[fromDataName].data[count]
                     : null;
             }
-            to.push(elem);
+            res.push(elem);
         }
+        return res;
     };
 
-    generateChartData('confPerMega',confData);
-    generateChartData('deadPerMega',deadData);
-    generateChartData('deadPerConf',deadPerConfData);
-    generateChartData('recoPerConf',recoPerConfData);
-    generateChartData('testPerMega',testData);
-    generateChartData('confPerTest',confPerTestData);
-
-    drawChart('conf_chart', confData, countryColors);
-    drawChart('dead_chart', deadData, countryColors);
-    drawChart('dead_per_conf_chart', deadPerConfData, countryColors);
-    drawChart('reco_per_conf_chart', recoPerConfData, countryColors);
-    drawChart('test_chart', testData, countryColors);
-    drawChart('conf_per_test_chart', confPerTestData, countryColors);
-
+    drawChart('conf_chart', generateChartData('confPerMega'), countryColors);
+    drawChart('dead_chart', generateChartData('deadPerMega'), countryColors);
+    drawChart('dead_per_conf_chart', generateChartData('deadPerConf'), countryColors);
+    drawChart('reco_per_conf_chart', generateChartData('recoPerConf'), countryColors);
+    drawChart('test_chart', generateChartData('testPerMega'), countryColors);
+    drawChart('conf_per_test_chart', generateChartData('confPerTest'), countryColors);
 };
 
 const makeSPARQLQuery = function( endpointUrl, sparqlQuery, successCallback ) {
@@ -552,9 +582,9 @@ const makeSPARQLQuery = function( endpointUrl, sparqlQuery, successCallback ) {
 };
 
 const reload = function(){
-    countryCodes = [];
+    chosenCountries = [];
     allCountries = [];
-    showLoader(false);
+    showLoader(true);
     cache4js.setLocalNamespace('covid19_country_comparison');
     cache4js.ajaxCache({
         url:'https://pkgstore.datahub.io/core/population/population_json/data/43d34c2353cbd16a0aa8cadfb193af05/population_json.json',
@@ -586,22 +616,23 @@ const reload = function(){
                                     });
 
                                     $('#share_button').click(function () {
-                                        prompt('Copy and share this URL', 'https://cityxdev.github.io/covid19ByCountry/?countries=' + btoa(JSON.stringify(countryCodes)));
+                                        prompt('Copy and share this URL', 'https://cityxdev.github.io/covid19ByCountry/?countries=' + btoa(JSON.stringify(chosenCountries)));
                                     });
-
-                                    hideLoader();
 
                                     loadCountries(countryDataFromServer, codvidDataFromPomber);
 
-                                    loadCountryCodes();
+                                    loadChosenCountries();
 
                                     let data = retrieveData(codvidDataFromPomber, testingDataFromWikiData, testingDataFromOWID);
                                     generateWeightedData(data);
+
                                     am4core.ready(function () {
                                         am4core.options.queue = true;
                                         am4core.options.onlyShowOnViewport = true;
                                         am4core.useTheme(am4themes_material);
+
                                         createCharts(data);
+                                        hideLoader();
                                     });
                                 }
                             },DYNAMIC_DATA_EXPIRE_SECS);
@@ -616,7 +647,7 @@ const reload = function(){
 const onModalOpen = function() {
     const countryUl = $('#active_countries');
     countryUl.empty();
-    let codes = countryUl.data('codes')?countryUl.data('codes').slice():countryCodes.slice();
+    let codes = countryUl.data('codes')?countryUl.data('codes').slice():chosenCountries.slice();
     for(let c in codes){
         let country = undefined;
         for(let ac in allCountries)
@@ -680,8 +711,8 @@ const onModalOpen = function() {
 
         let apply = function(){
             let codes = $('#active_countries').data('codes').slice();
-            countryCodes=codes;
-            cache4js.storeCache(COUNTRY_CODES_CACHE_KEY,countryCodes);
+            chosenCountries=codes;
+            cache4js.storeCache(COUNTRY_CODES_CACHE_KEY,chosenCountries);
             reload();
         };
         setTimeout(function (){
