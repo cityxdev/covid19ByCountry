@@ -29,8 +29,12 @@ div.chart-title h2{
     font-weight: bold;
 }
 
+.chart-desc{
+    font-style: italic;
+}
+
 div.chart-inner{
-    margin-top: -30px;
+    margin-top: -10px;
     height: calc(100% - 50px);
 }
 @media only screen and (max-height: 850px) {

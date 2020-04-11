@@ -182,6 +182,8 @@ const retrieveTestingDataFromOWID = function(from, to) {
         switch (dataSourceCountryName) {
             case 'United States - inconsistent units (COVID Tracking Project)':
                 return true;
+            case 'United States - inconsistent units (COVID Tracking Project)':
+                return true;
             default:
                 return false;
         }
@@ -256,10 +258,16 @@ const retrieveTestingDateFromWikiData = function(from, to){
         }
     };
 
+    const dataSourceCountryName2CountryName = function (dataSourceCountryName) {
+        if (dataSourceCountryName === 'United States')
+            return 'US';
+        return dataSourceCountryName;
+    };
+
     let lastDate = undefined;
     for(let e in from.results.bindings){
         let entry = from.results.bindings[e];
-        let cName = entry.countryLabel.value;
+        let cName = dataSourceCountryName2CountryName(entry.countryLabel.value);
 
         if(shouldDiscardCountry(cName))
             continue;
@@ -397,11 +405,33 @@ const generateWeightedData = function(data) {
             country.recoPerConf.data.push(country.reco.data[i] / country.conf.data[i] * 100);
         }
 
-        country.testPerMega = {data: []};
+
+        let testDataProblem = false;
+        country.confPerTest = {data: []};
         for (let i = 0; i < (country.test.data?country.test.data.length:0) ; i++) {
-            const absValue = country.test.data[i];
-            country.testPerMega.data.push(absValue===null||absValue===undefined ? null : absValue/megas);
+            if(country.conf.data.length<i+1)
+                break;
+            const tests = country.test.data[i];
+            const confs = country.conf.data[i];
+            if(confs===null||tests===null)
+                country.confPerTest.data.push(null);
+            else if(confs/tests>0.99) {//confirmed cases cannot be more than 99% of tests
+                testDataProblem=true;
+                break;
+            } else country.confPerTest.data.push(confs/tests*100);
         }
+        if(testDataProblem) {
+            country.confPerTest = {data: []};
+            country.testPerMega = {data: []};
+            console.log('Problem on testing data for country "'+cName+'"');
+        } else {
+            country.testPerMega = {data: []};
+            for (let i = 0; i < (country.test.data?country.test.data.length:0) ; i++) {
+                const absValue = country.test.data[i];
+                country.testPerMega.data.push(absValue===null||absValue===undefined ? null : absValue/megas);
+            }
+        }
+
     }
 };
 
@@ -470,7 +500,7 @@ const drawChart = function(elemId,data,countryColors) {
 };
 
 const createCharts = function(data) {
-    let confData = [], deadData = [], deadPerConfData = [], recoPerConfData = [], testData = [];
+    let confData = [], deadData = [], deadPerConfData = [], recoPerConfData = [], testData = [], confPerTestData = [];
     let confMaxDelta=0;
     let countryColors={};
 
@@ -480,76 +510,34 @@ const createCharts = function(data) {
         confMaxDelta = confMaxDelta=Math.max(confMaxDelta,country.conf.data.length-1);
     }
 
-    for(let count = 0 ; count<=confMaxDelta ; count++) {
-        const elem = {
-            day: count
-        };
-        for (let cName in data) {
-            let country = data[cName];
-            elem[cName] = count<country.confPerMega.data.length
-                ? country.confPerMega.data[count]
-                : null;
+    const generateChartData = function (fromDataName, to) {
+        for (let count = 0; count <= confMaxDelta; count++) {
+            const elem = {
+                day: count
+            };
+            for (let cName in data) {
+                let country = data[cName];
+                elem[cName] = count < country[fromDataName].data.length
+                    ? country[fromDataName].data[count]
+                    : null;
+            }
+            to.push(elem);
         }
-        confData.push(elem);
-    }
+    };
 
-    for(let count = 0 ; count<=confMaxDelta ; count++) {
-        const elem = {
-            day: count
-        };
-        for (let cName in data) {
-            let country = data[cName];
-            elem[cName] = count<country.deadPerMega.data.length
-                ? country.deadPerMega.data[count]
-                : null;
-        }
-        deadData.push(elem);
-    }
-
-    for(let count = 0 ; count<=confMaxDelta ; count++) {
-        const elem = {
-            day: count
-        };
-        for (let cName in data) {
-            let country = data[cName];
-            elem[cName] = count<country.deadPerConf.data.length
-                ? country.deadPerConf.data[count]
-                : null;
-        }
-        deadPerConfData.push(elem);
-    }
-
-    for(let count = 0 ; count<=confMaxDelta ; count++) {
-        const elem = {
-            day: count
-        };
-        for (let cName in data) {
-            let country = data[cName];
-            elem[cName] = count<country.recoPerConf.data.length
-                ? country.recoPerConf.data[count]
-                : null;
-        }
-        recoPerConfData.push(elem);
-    }
-
-    for(let count = 0 ; count<=confMaxDelta ; count++) {
-        const elem = {
-            day: count
-        };
-        for (let cName in data) {
-            let country = data[cName];
-            elem[cName] = count<country.testPerMega.data.length
-                ? country.testPerMega.data[count]
-                : null;
-        }
-        testData.push(elem);
-    }
+    generateChartData('confPerMega',confData);
+    generateChartData('deadPerMega',deadData);
+    generateChartData('deadPerConf',deadPerConfData);
+    generateChartData('recoPerConf',recoPerConfData);
+    generateChartData('testPerMega',testData);
+    generateChartData('confPerTest',confPerTestData);
 
     drawChart('conf_chart', confData, countryColors);
     drawChart('dead_chart', deadData, countryColors);
     drawChart('dead_per_conf_chart', deadPerConfData, countryColors);
     drawChart('reco_per_conf_chart', recoPerConfData, countryColors);
     drawChart('test_chart', testData, countryColors);
+    drawChart('conf_per_test_chart', confPerTestData, countryColors);
 
 };
 
