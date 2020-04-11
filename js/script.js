@@ -369,8 +369,8 @@ const generateModelData = function(data) {
     }
 };
 
-const generateDay0Dates = function(data) {
-    let day0DatesList = $('#day_0_dates').empty();
+const generateCountryDetails = function(data) {
+    let countryDetailsTBody = $('#country_details_table tbody').empty();
     let countries = [];
     for (let c in chosenCountries) {
         let country = countryForCode(chosenCountries[c]);
@@ -384,7 +384,13 @@ const generateDay0Dates = function(data) {
 
     for (let c in countries) {
         let country = countries[c];
-        day0DatesList.append('<li><label>' + country.name+ '</label> ' + formatDate(country.first100ConfDate) + '</li>');
+        countryDetailsTBody.append(
+            '<tr>' +
+            '<td>' + country.name+ '</td>' +
+            '<td>'+formatDate(country.first100ConfDate)+'</td>' +
+            '<td>'+country.pop.toLocaleString('en-US')+' (year: '+country.popYear+')</td>' +
+            '</tr>'
+        );
     }
 };
 
@@ -415,7 +421,7 @@ const retrieveData = function(covidDataFromPomber,testingDataFromWikiData,testin
 
     generateModelData(data);
 
-    generateDay0Dates(data);
+    generateCountryDetails(data);
 
     return data;
 };
