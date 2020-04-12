@@ -394,7 +394,7 @@ const generateCountryDetails = function(data) {
         countryDetailsTBody.append(
             '<tr>' +
             '<td>' + country.name+ '</td>' +
-            '<td>'+formatDate(country.first100ConfDate)+'</td>' +
+            '<td>'+(country.first100ConfDate?formatDate(country.first100ConfDate):'--')+'</td>' +
             '<td>'+country.pop.toLocaleString('en-US')+' (year: '+country.popYear+')</td>' +
             '</tr>'
         );
@@ -439,27 +439,26 @@ const generateWeightedData = function(data) {
         let megas = country.pop / 1000000.0;
 
         country.confPerMega = {data: []};
-        for (let i = 0; i < country.conf.data.length; i++)
+        for (let i = 0; i < (country.conf.data?country.conf.data.length:0) ; i++)
             country.confPerMega.data.push(country.conf.data[i] / megas);
 
         country.deadPerMega = {data: []};
-        for (let i = 0; i < country.dead.data.length; i++)
+        for (let i = 0; i < (country.dead.data?country.dead.data.length:0) ; i++)
             country.deadPerMega.data.push(country.dead.data[i] / megas);
 
         country.deadPerConf = {data: []};
-        for (let i = 0; i < country.dead.data.length; i++)
+        for (let i = 0; i < (country.dead.data?country.dead.data.length:0) ; i++)
             country.deadPerConf.data.push(country.dead.data[i] / country.conf.data[i] * 100);
 
         country.recoPerConf = {data: []};
-        for (let i = 0; i < country.reco.data.length; i++) {
+        for (let i = 0; i < (country.reco.data?country.reco.data.length:0) ; i++)
             country.recoPerConf.data.push(country.reco.data[i] / country.conf.data[i] * 100);
-        }
 
 
         let testDataProblem = false;
         country.confPerTest = {data: []};
         for (let i = 0; i < (country.test.data?country.test.data.length:0) ; i++) {
-            if(country.conf.data.length<i+1)
+            if(!country.conf.data||country.conf.data.length<i+1)
                 break;
             const tests = country.test.data[i];
             const confs = country.conf.data[i];
@@ -560,7 +559,7 @@ const createCharts = function(data,chartsCodes) {
     for (let cName in data) {
         let country = data[cName];
         countryColors[cName]=data[cName].color;
-        confMaxDelta = confMaxDelta=Math.max(confMaxDelta,country.conf.data.length-1);
+        confMaxDelta = confMaxDelta=Math.max(confMaxDelta,country.conf.data?country.conf.data.length-1:0);
     }
 
     let charts2Show = chartsCodes.length===0
