@@ -28,6 +28,11 @@ div.intro{
     background-color: #efefef;
     padding: 10px;
 }
+@media only screen and (max-width: 800px) {
+    div.intro {
+        font-size: 14px;
+    }
+}
 
 div.menu{
     margin-right: 10%;
@@ -47,12 +52,21 @@ label{
 .day-0 .chart-desc{
     background-color: #ddd;
 }
+.day-0 .chart-desc{
+    padding: 5px 5px 10px;
+}
+@media only screen and (max-width: 800px) {
+    .day-0 .chart-desc{
+        padding: 5px;
+    }
+}
 
 #country_details_table{
     padding-top: 10px;
     font-size: 13px;
     margin-left: 10px;
     margin-bottom: 10px;
+    margin-top: 20px;
 }
 #country_details_table tbody tr td:last-child,
 #country_details_table thead tr th:last-child{
@@ -74,6 +88,14 @@ label{
 }
 #country_details_table tbody tr td:not(:last-child){
     border-right: 1px solid #EAEAEA;
+}
+@media only screen and (max-width: 800px) {
+    #country_details_table{
+        font-size: 12px;
+    }
+    #country_details_table thead tr th:not(:last-child){
+        padding-right: 10px;
+    }
 }
 
 div.chart-outer{
@@ -105,6 +127,14 @@ div.chart-inner{
         margin-top: 0;
     }
 }
+@media only screen and (max-width: 800px) {
+    div.chart-title h2 {
+        font-size: 16px;
+    }
+    .chart-desc{
+        font-size: 12px;
+    }
+}
 
 div.chart-container{
     height: 100%;
@@ -113,6 +143,11 @@ div.embed-container{
     position: absolute;
     bottom: 14px;
     right: 14px;
+}
+@media only screen and (max-width: 800px) {
+    div.embed-container {
+        display: none;
+    }
 }
 
 
