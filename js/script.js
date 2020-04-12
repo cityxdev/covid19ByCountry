@@ -654,7 +654,10 @@ const reload = function(){
                                     $('button.embed-button').click(function () {
                                         prompt(
                                             'Embed this code into your website',
-                                            '<iframe src="https://cityxdev.github.io/covid19ByCountry/?embed=true&countries=' + btoa(JSON.stringify(chosenCountries))+'&chartCodes='+btoa(JSON.stringify([$($(this).parents('div.chart-outer')[0]).data('code')]))+'"></iframe>'
+                                            '<iframe src="https://cityxdev.github.io/covid19ByCountry/?embed=true'
+                                            + '&countries=' + btoa(JSON.stringify(chosenCountries))
+                                            +'&chartCodes='+btoa(JSON.stringify([$($(this).parents('div.chart-outer')[0]).data('code')]))
+                                            +'"></iframe>'
                                         );
                                     });
 
