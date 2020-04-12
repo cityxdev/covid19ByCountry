@@ -455,6 +455,15 @@ const generateWeightedData = function(data) {
             country.recoPerConf.data.push(country.reco.data[i] / country.conf.data[i] * 100);
 
 
+        country.activePerMega = {data:[]};
+        for (let i = 0; i < (country.conf.data?country.conf.data.length:0) ; i++) {
+            const conf = country.conf.data[i];
+            const reco = country.reco.data && country.reco.data.length>i ? country.reco.data[i] : null;
+            const dead = country.dead.data && country.dead.data.length>i ? country.dead.data[i] : null;
+            const active = conf===null || reco===null || dead===null ? null : conf-(reco+dead);
+            country.activePerMega.data.push(active / megas);
+        }
+
         let testDataProblem = false;
         country.confPerTest = {data: []};
         for (let i = 0; i < (country.test.data?country.test.data.length:0) ; i++) {
@@ -504,8 +513,10 @@ const drawChart = function(elemId,data,countryColors) {
 
 
     if(!mobile) {
-        chart.scrollbarX = new am4charts.XYChartScrollbar();
+        chart.scrollbarX = new am4core.Scrollbar();
         chart.exporting.menu = new am4core.ExportMenu();
+        chart.exporting.menu.align = "left";
+        chart.exporting.menu.verticalAlign = "bottom";
     }
 
     for(let countryCode in countryColors){
@@ -526,8 +537,8 @@ const drawChart = function(elemId,data,countryColors) {
             series.strokeWidth = 1;
         }
 
-        if(!mobile)
-            chart.scrollbarX.series.push(series);
+       //if(!mobile)
+       //    chart.scrollbarX.series.push(series);
 
         if(isRealData) {
             const circleBullet = new am4core.Circle();
@@ -563,7 +574,7 @@ const createCharts = function(data,chartsCodes) {
     }
 
     let charts2Show = chartsCodes.length===0
-        ? ['conf','dead','dead-per-conf','reco-per-conf','test','test-positive']
+        ? ['conf','active','dead','dead-per-conf','reco-per-conf','test','test-positive']
         : chartsCodes;
 
     const generateChartData = function (fromDataName) {
@@ -585,6 +596,9 @@ const createCharts = function(data,chartsCodes) {
 
     if(charts2Show.indexOf('conf')>=0)
         drawChart('conf_chart', generateChartData('confPerMega'), countryColors);
+
+    if(charts2Show.indexOf('conf')>=0)
+        drawChart('active_chart', generateChartData('activePerMega'), countryColors);
 
     if(charts2Show.indexOf('dead')>=0)
         drawChart('dead_chart', generateChartData('deadPerMega'), countryColors);
