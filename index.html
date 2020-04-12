@@ -56,7 +56,7 @@
 <body>
 <div class="loader-container"><div class="loader"></div></div>
 
-<h1><img alt="logo" src="img/covid.png" height="50px"/> COVID-19 By Country</h1>
+<h1 class="title"><img alt="logo" src="img/covid.png" height="50px"/> COVID-19 By Country</h1>
 <div class="intro">
     <p>This is a comparison of the COVID-19 pandemic by country, weighted by population. Every data series begins on the day that the corresponding country reached the 100<sup>th</sup> confirmed case. <a href="#" onclick="$('#about_modal').trigger('open')">[more info]</a></p>
 </div>
@@ -72,52 +72,58 @@
     <div class="chart-container"><table id="country_details_table"><thead><tr><th>Country</th><th>Day 0</th><th>Population</th></tr></thead><tbody></tbody></table></div>
 </div>
 <div id="charts">
-    <div class="chart-outer conf">
+
+    <div class="chart-outer conf" data-code="conf">
         <div class="chart-title">
             <h2>Confirmed cases per million inhab</h2>
         </div>
         <div class="chart-inner">
             <div class="chart-container" id="conf_chart"></div>
         </div>
+        <div class="embed-container"><button class="embed-button">embed</button></div>
     </div>
 
-    <div class="chart-outer dead">
+    <div class="chart-outer dead" data-code="dead">
         <div class="chart-title">
             <h2>Deaths per million inhab</h2>
         </div>
         <div class="chart-inner">
             <div class="chart-container" id="dead_chart"></div>
         </div>
+        <div class="embed-container"><button class="embed-button">embed</button></div>
     </div>
 
-    <div class="chart-outer dead-per-conf">
+    <div class="chart-outer dead-per-conf" data-code="dead-per-conf">
         <div class="chart-title">
             <h2>Fatality rate (%)</h2>
         </div>
         <div class="chart-inner">
             <div class="chart-container" id="dead_per_conf_chart"></div>
         </div>
+        <div class="embed-container"><button class="embed-button">embed</button></div>
     </div>
 
-    <div class="chart-outer reco-per-conf">
+    <div class="chart-outer reco-per-conf" data-code="reco-per-conf">
         <div class="chart-title">
             <h2>Recovery rate (%)</h2>
         </div>
         <div class="chart-inner">
             <div class="chart-container" id="reco_per_conf_chart"></div>
         </div>
+        <div class="embed-container"><button class="embed-button">embed</button></div>
     </div>
 
-    <div class="chart-outer test">
+    <div class="chart-outer test" data-code="test">
         <div class="chart-title">
             <h2>Tests per million inhab</h2>
         </div>
         <div class="chart-inner">
             <div class="chart-container" id="test_chart"></div>
         </div>
+        <div class="embed-container"><button class="embed-button">embed</button></div>
     </div>
 
-    <div class="chart-outer test">
+    <div class="chart-outer test-positive" data-code="test-positive">
         <div class="chart-title">
             <h2>Positive tests rate (%)</h2>
             <div class="chart-desc">Confirmed cases on tested population</div>
@@ -125,6 +131,7 @@
         <div class="chart-inner">
             <div class="chart-container" id="conf_per_test_chart"></div>
         </div>
+        <div class="embed-container"><button class="embed-button">embed</button></div>
     </div>
 </div>
 

@@ -11,6 +11,15 @@ h1{
     text-align: center;
 }
 
+button{
+    text-transform: uppercase;
+    border-radius: 4px;
+    font-size: 12px;
+    border: 0;
+    line-height: 1.5;
+    padding-top: 4px;
+}
+
 div.intro{
     font-size: 16px;
     margin-right: 10%;
@@ -65,6 +74,8 @@ div.chart-outer{
     height: 500px;
     width: 100%;
     margin-top: 40px;
+    display: none;
+    position: relative;
 }
 
 div.chart-title{
@@ -92,17 +103,14 @@ div.chart-inner{
 div.chart-container{
     height: 100%;
 }
-
-button{
-    text-transform: uppercase;
-    border-radius: 4px;
-    font-size: 12px;
-    border: 0;
-    line-height: 1.5;
-    padding-top: 4px;
+div.embed-container{
+    position: absolute;
+    bottom: 14px;
+    right: 14px;
 }
 
-#choose_countries_button, #share_button{
+
+#choose_countries_button, #share_button, .embed-button{
     background-color: #000091;
     color: #FFFFFF;
 }

@@ -497,8 +497,10 @@ const drawChart = function(elemId,data,countryColors) {
     valueAxis.fontSize=mobile?10:12;
 
 
-    if(!mobile)
+    if(!mobile) {
         chart.scrollbarX = new am4charts.XYChartScrollbar();
+        chart.exporting.menu = new am4core.ExportMenu();
+    }
 
     for(let countryCode in countryColors){
         let series = chart.series.push(new am4charts.LineSeries());
@@ -526,7 +528,7 @@ const drawChart = function(elemId,data,countryColors) {
             circleBullet.fill = am4core.color(countryColors[countryCode]);
             circleBullet.stroke = am4core.color("#fff");
             circleBullet.strokeWidth = 1;
-            circleBullet.radius = 4;
+            circleBullet.radius = 3.5;
             series.bullets.push(circleBullet);
         }
     }
@@ -540,9 +542,11 @@ const drawChart = function(elemId,data,countryColors) {
     chart.legend.fontSize=mobile?8:12;
     if(!mobile)
         chart.legend.maxHeight=70;
+
+    $($('#'+elemId).parents('div.chart-outer')[0]).css('display','block');
 };
 
-const createCharts = function(data) {
+const createCharts = function(data,chartsCodes) {
     let confMaxDelta=0;
     let countryColors={};
 
@@ -551,6 +555,10 @@ const createCharts = function(data) {
         countryColors[cName]=data[cName].color;
         confMaxDelta = confMaxDelta=Math.max(confMaxDelta,country.conf.data.length-1);
     }
+
+    let charts2Show = chartsCodes.length===0
+        ? ['conf','dead','dead-per-conf','reco-per-conf','test','test-positive']
+        : chartsCodes;
 
     const generateChartData = function (fromDataName) {
         let res = [];
@@ -569,12 +577,23 @@ const createCharts = function(data) {
         return res;
     };
 
-    drawChart('conf_chart', generateChartData('confPerMega'), countryColors);
-    drawChart('dead_chart', generateChartData('deadPerMega'), countryColors);
-    drawChart('dead_per_conf_chart', generateChartData('deadPerConf'), countryColors);
-    drawChart('reco_per_conf_chart', generateChartData('recoPerConf'), countryColors);
-    drawChart('test_chart', generateChartData('testPerMega'), countryColors);
-    drawChart('conf_per_test_chart', generateChartData('confPerTest'), countryColors);
+    if(charts2Show.indexOf('conf')>=0)
+        drawChart('conf_chart', generateChartData('confPerMega'), countryColors);
+
+    if(charts2Show.indexOf('dead')>=0)
+        drawChart('dead_chart', generateChartData('deadPerMega'), countryColors);
+
+    if(charts2Show.indexOf('dead-per-conf')>=0)
+        drawChart('dead_per_conf_chart', generateChartData('deadPerConf'), countryColors);
+
+    if(charts2Show.indexOf('reco-per-conf')>=0)
+        drawChart('reco_per_conf_chart', generateChartData('recoPerConf'), countryColors);
+
+    if(charts2Show.indexOf('test')>=0)
+        drawChart('test_chart', generateChartData('testPerMega'), countryColors);
+
+    if(charts2Show.indexOf('test-positive')>=0)
+        drawChart('conf_per_test_chart', generateChartData('confPerTest'), countryColors);
 };
 
 const makeSPARQLQuery = function( endpointUrl, sparqlQuery, successCallback ) {
@@ -616,6 +635,13 @@ const reload = function(){
                             cache4js.ajaxCache({
                                 url: 'https://raw.githubusercontent.com/owid/covid-19-data/master/public/data/testing/covid-testing-all-observations.csv',
                                 success: function (testingDataFromOWID) {
+
+                                    let chartsCodes=[];
+                                    const chartCodesParam = getURLParamValue("chartCodes");
+                                    if(chartCodesParam)
+                                        chartsCodes = JSON.parse(atob(chartCodesParam));
+
+
                                     $('#choose_countries_button').click(function () {
                                         $('#choose_countries_modal').trigger('open');
                                         onModalOpen();
@@ -623,6 +649,13 @@ const reload = function(){
 
                                     $('#share_button').click(function () {
                                         prompt('Copy and share this URL', 'https://cityxdev.github.io/covid19ByCountry/?countries=' + btoa(JSON.stringify(chosenCountries)));
+                                    });
+
+                                    $('button.embed-button').click(function () {
+                                        prompt(
+                                            'Embed this code into your website',
+                                            '<iframe src="https://cityxdev.github.io/covid19ByCountry/?embed=true&countries=' + btoa(JSON.stringify(chosenCountries))+'&chartCodes='+btoa(JSON.stringify([$($(this).parents('div.chart-outer')[0]).data('code')]))+'"></iframe>'
+                                        );
                                     });
 
                                     loadCountries(countryDataFromServer, codvidDataFromPomber);
@@ -637,7 +670,7 @@ const reload = function(){
                                         am4core.options.onlyShowOnViewport = true;
                                         am4core.useTheme(am4themes_material);
 
-                                        createCharts(data);
+                                        createCharts(data,chartsCodes);
                                         hideLoader();
                                     });
                                 }
@@ -732,5 +765,13 @@ const onModalOpen = function() {
 };
 
 $(function () {
+    if(getURLParamValue('embed')==='true'){
+        $('.title').hide();
+        $('.intro').hide();
+        $('.menu').hide();
+        $('.day-0').hide();
+        $('.embed-container').hide();
+    }
+
     reload();
 });
