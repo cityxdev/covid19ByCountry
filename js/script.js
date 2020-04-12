@@ -198,12 +198,18 @@ const retrieveTestingDataFromOWID = function(from, to) {
         switch (dataSourceCountryName) {
             case 'United States - inconsistent units (COVID Tracking Project)':
                 return true;
-            case 'United States - inconsistent units (COVID Tracking Project)':
-                return true;
             default:
                 return false;
         }
     };
+
+    const getValueIndexForCountryName = function(cName){
+        switch (cName) {
+            case 'Japan': return 6;
+            default: return 5;
+        }
+    };
+
     let existent = [];
     for (let cName in to)
         if(to[cName].test.data)
@@ -245,7 +251,8 @@ const retrieveTestingDataFromOWID = function(from, to) {
                 }
 
                 try {
-                    countryData.test.data.push(values[5] && values[5].trim() !== '' ? Number(values[5]) : null);
+                    let valueIndex = getValueIndexForCountryName(cName);
+                    countryData.test.data.push(values[valueIndex] && values[valueIndex].trim() !== '' ? Number(values[valueIndex]) : null);
                 } catch (e) {
                     console.log(e);
                     countryData.test.data.push(null);
