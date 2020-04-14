@@ -20,6 +20,13 @@ button{
     padding-top: 4px;
 }
 
+label.checkbox-label{
+}
+input[type=checkbox]{
+    margin-right: 4px;
+    vertical-align: middle;
+}
+
 div.intro{
     font-size: 16px;
     margin-right: 10%;
@@ -112,6 +119,12 @@ div.chart-title{
 div.chart-title h2{
     font-size: 20px;
     font-weight: bold;
+}
+
+@media only screen and (max-width: 800px) {
+    div.add-simul-container{
+        display: none;
+    }
 }
 
 .chart-desc{

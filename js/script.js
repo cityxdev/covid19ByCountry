@@ -211,8 +211,8 @@ const retrieveTestingDataFromOWID = function(from, to) {
     };
 
     let existent = [];
-    for (let cName in to)
-        if(to[cName].test.data)
+    for (let cName in to.countryData)
+        if(to.countryData[cName].test.data)
             existent.push(cName);
 
     let testLines = from.split('\n');
@@ -228,7 +228,7 @@ const retrieveTestingDataFromOWID = function(from, to) {
         if(existent.indexOf(cName)>=0)
             continue;
 
-        let countryData = to[cName];
+        let countryData = to.countryData[cName];
         if (countryData) {
             if (lastCountry !== cName) {
                 lastCountry = cName;
@@ -264,8 +264,9 @@ const retrieveTestingDataFromOWID = function(from, to) {
         }
     }
 
-    for (let cName in to) {
-        let country = to[cName];
+
+    for (let cName in to.countryData) {
+        let country = to.countryData[cName];
         for(let d = 0 ; d < daysBetween(country.test.firstDate,country.first100ConfDate) ; d++)
             country.test.data.unshift(null);
     }
@@ -295,7 +296,7 @@ const retrieveTestingDateFromWikiData = function(from, to){
         if(shouldDiscardCountry(cName))
             continue;
 
-        let country = to[cName];
+        let country = to.countryData[cName];
         if(country){
             let date = new Date(entry.date.value);
 
@@ -326,16 +327,16 @@ const retrieveTestingDateFromWikiData = function(from, to){
         }
     }
 
-    for (let cName in to) {
-        let country = to[cName];
+    for (let cName in to.countryData) {
+        let country = to.countryData[cName];
         for(let d = 0 ; d < daysBetween(country.test.firstDate,country.first100ConfDate) ; d++)
             country.test.data.unshift(null);
     }
 };
 
 const retrieveDataFromPomber = function(from, to) {
-    for (let cName in to) {
-        let countryData = to[cName];
+    for (let cName in to.countryData) {
+        let countryData = to.countryData[cName];
         let covidDataElem = from[cName];
         for (let i = 0; i < covidDataElem.length; i++) {
             let entry = covidDataElem[i];
@@ -357,9 +358,9 @@ const retrieveDataFromPomber = function(from, to) {
     }
 };
 
-const generateModelData = function(data) {
+const generateModelData = function(to) {
     let modelName = '10%Growth_5Mppl';
-    data[modelName] = {
+    to.countryData[modelName] = {
         first100ConfDate: new Date('2020-02-15'),
         color: '#FF00FF',
         pop: 5000000,
@@ -368,11 +369,11 @@ const generateModelData = function(data) {
         reco: {data: [15]},
         test: {data: [500]}
     };
-    for (let i = 1; i < daysBetween(data[modelName].first100ConfDate, new Date()); i++) {
-        data[modelName].conf.data.push(data[modelName].conf.data[i - 1] * 1.1);
-        data[modelName].dead.data.push(data[modelName].conf.data[i] * 0.05);
-        data[modelName].reco.data.push(data[modelName].conf.data[i] * 0.15);
-        data[modelName].test.data.push(data[modelName].test.data[i - 1] * 1.10);
+    for (let i = 1; i < daysBetween(to.countryData[modelName].first100ConfDate, new Date()); i++) {
+        to.countryData[modelName].conf.data.push(to.countryData[modelName].conf.data[i - 1] * 1.1);
+        to.countryData[modelName].dead.data.push(to.countryData[modelName].conf.data[i] * 0.05);
+        to.countryData[modelName].reco.data.push(to.countryData[modelName].conf.data[i] * 0.15);
+        to.countryData[modelName].test.data.push(to.countryData[modelName].test.data[i - 1] * 1.10);
     }
 };
 
@@ -381,7 +382,7 @@ const generateCountryDetails = function(data) {
     let countries = [];
     for (let c in chosenCountries) {
         let country = countryForCode(chosenCountries[c]);
-        country.first100ConfDate=data[country.name].first100ConfDate;
+        country.first100ConfDate=data.countryData[country.name].first100ConfDate;
         countries.push(country);
     }
 
@@ -404,22 +405,22 @@ const generateCountryDetails = function(data) {
 const retrieveData = function(covidDataFromPomber,testingDataFromWikiData,testingDataFromOWID){
     const COLORS = ['#003f5c','#bc5090','#007e7b','#ff6361','#ffa600','#008004','#58508d','#9c3600'];
 
-    const data = {};
+    const data = {countryData: {}};
     for(let c in allCountries){
         const country = allCountries[c];
         const name = country.name;
         if(chosenCountries.indexOf(country.code)>=0)
-            data[name]={
-                pop:country.pop,
-                conf:{},
-                dead:{},
-                reco:{},
-                test:{}
+            data.countryData[name]={
+                pop: country.pop,
+                conf: {},
+                dead: {},
+                reco: {},
+                test: {}
             };
     }
     let count = 0;
-    for(let cName in data)
-        data[cName].color=COLORS[count++];
+    for(let cName in data.countryData)
+        data.countryData[cName].color=COLORS[count++];
 
     retrieveDataFromPomber(covidDataFromPomber, data);
 
@@ -434,8 +435,8 @@ const retrieveData = function(covidDataFromPomber,testingDataFromWikiData,testin
 };
 
 const generateWeightedData = function(data) {
-    for (let cName in data) {
-        let country = data[cName];
+    for (let cName in data.countryData) {
+        let country = data.countryData[cName];
         let megas = country.pop / 1000000.0;
 
         country.confPerMega = {data: []};
@@ -494,7 +495,7 @@ const generateWeightedData = function(data) {
 };
 
 const drawChart = function(elemId,data,countryColors) {
-    let mobile = getHeight()<850;
+    const mobile = getHeight()<850;
 
     if(charts[elemId])
         charts[elemId].dispose();
@@ -511,7 +512,6 @@ const drawChart = function(elemId,data,countryColors) {
     let valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
     valueAxis.fontSize=mobile?10:12;
 
-
     if(!mobile) {
         chart.scrollbarX = new am4core.Scrollbar();
         chart.exporting.menu = new am4core.ExportMenu();
@@ -519,30 +519,25 @@ const drawChart = function(elemId,data,countryColors) {
         chart.exporting.menu.verticalAlign = "bottom";
     }
 
-    for(let countryCode in countryColors){
-        let series = chart.series.push(new am4charts.LineSeries());
-        series.dataFields.valueY = countryCode;
+    for(let cName in countryColors){
+        const series = chart.series.push(new am4charts.LineSeries());
+        series.dataFields.valueY = cName;
         series.dataFields.categoryX = "day";
-        series.name = countryCode;
+        series.name = cName;
         series.strokeWidth = 1;
         series.minBulletDistance = 10;
-
-
         series.legendSettings.valueText = "{valueY}";
         series.visible = true;
-        series.stroke = am4core.color(countryColors[countryCode]);
-        const isRealData = countryCode.indexOf('_')<0;
+        series.stroke = am4core.color(countryColors[cName]);
+        const isRealData = cName.indexOf('_')<0;
         if(!isRealData) {
             series.strokeDasharray = 3;
             series.strokeWidth = 1;
         }
 
-       //if(!mobile)
-       //    chart.scrollbarX.series.push(series);
-
         if(isRealData) {
             const circleBullet = new am4core.Circle();
-            circleBullet.fill = am4core.color(countryColors[countryCode]);
+            circleBullet.fill = am4core.color(countryColors[cName]);
             circleBullet.stroke = am4core.color("#fff");
             circleBullet.strokeWidth = 1;
             circleBullet.radius = 3.5;
@@ -563,57 +558,149 @@ const drawChart = function(elemId,data,countryColors) {
     $($('#'+elemId).parents('div.chart-outer')[0]).css('display','block');
 };
 
-const createCharts = function(data,chartsCodes) {
-    let confMaxDelta=0;
-    let countryColors={};
+const generateChartData = function (fromDataName,data) {
+    let res = [];
+    for (let count = 0; count <= data.confMaxDelta; count++) {
+        const elem = {
+            day: count
+        };
+        for (let cName in data.countryData) {
+            let country = data.countryData[cName];
+            elem[cName] = country[fromDataName] && count < country[fromDataName].data.length
+                ? country[fromDataName].data[count]
+                : null;
+        }
+        res.push(elem);
+    }
+    return res;
+};
 
-    for (let cName in data) {
-        let country = data[cName];
-        countryColors[cName]=data[cName].color;
-        confMaxDelta = confMaxDelta=Math.max(confMaxDelta,country.conf.data?country.conf.data.length-1:0);
+const createCharts = function(data,chartsCodes) {
+    data.confMaxDelta=0;
+    data.countryColors={};
+    for (let cName in data.countryData) {
+        let country = data.countryData[cName];
+        data.countryColors[cName]=data.countryData[cName].color;
+        data.confMaxDelta = data.confMaxDelta=Math.max(data.confMaxDelta,country.conf.data?country.conf.data.length-1:0);
     }
 
     let charts2Show = chartsCodes.length===0
         ? ['conf','active','dead','dead-per-conf','reco-per-conf','test','test-positive']
         : chartsCodes;
 
-    const generateChartData = function (fromDataName) {
-        let res = [];
-        for (let count = 0; count <= confMaxDelta; count++) {
-            const elem = {
-                day: count
-            };
-            for (let cName in data) {
-                let country = data[cName];
-                elem[cName] = count < country[fromDataName].data.length
-                    ? country[fromDataName].data[count]
-                    : null;
-            }
-            res.push(elem);
-        }
-        return res;
-    };
+    if(charts2Show.indexOf('conf')>=0) {
+        drawChart('conf_chart', generateChartData('confPerMega', data), data.countryColors);
+        $('#conf_chart').data('currentdata',data);
+    } else $('#conf_chart').data('currentdata',undefined);
 
-    if(charts2Show.indexOf('conf')>=0)
-        drawChart('conf_chart', generateChartData('confPerMega'), countryColors);
-
-    if(charts2Show.indexOf('conf')>=0)
-        drawChart('active_chart', generateChartData('activePerMega'), countryColors);
+    if(charts2Show.indexOf('active')>=0)
+        drawChart('active_chart', generateChartData('activePerMega',data), data.countryColors);
 
     if(charts2Show.indexOf('dead')>=0)
-        drawChart('dead_chart', generateChartData('deadPerMega'), countryColors);
+        drawChart('dead_chart', generateChartData('deadPerMega',data), data.countryColors);
 
     if(charts2Show.indexOf('dead-per-conf')>=0)
-        drawChart('dead_per_conf_chart', generateChartData('deadPerConf'), countryColors);
+        drawChart('dead_per_conf_chart', generateChartData('deadPerConf',data), data.countryColors);
 
     if(charts2Show.indexOf('reco-per-conf')>=0)
-        drawChart('reco_per_conf_chart', generateChartData('recoPerConf'), countryColors);
+        drawChart('reco_per_conf_chart', generateChartData('recoPerConf',data), data.countryColors);
 
     if(charts2Show.indexOf('test')>=0)
-        drawChart('test_chart', generateChartData('testPerMega'), countryColors);
+        drawChart('test_chart', generateChartData('testPerMega',data), data.countryColors);
 
     if(charts2Show.indexOf('test-positive')>=0)
-        drawChart('conf_per_test_chart', generateChartData('confPerTest'), countryColors);
+        drawChart('conf_per_test_chart', generateChartData('confPerTest',data), data.countryColors);
+};
+
+const addSimulation2Conf = function(data){
+    const chart = charts['conf_chart'];
+    if(chart){
+        const formatDate = function (date) {
+            return date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate();
+        };
+
+        const addSeries2Chart = function(){
+            const data4Chart = generateChartData('simulPerMega',data);
+
+            for(let countryCode in data.countryColors){
+                const isRealData = countryCode.indexOf('_')<0;
+                if(isRealData) {
+                    chart.data[countryCode+'_simul']=data4Chart[countryCode];
+                    const series = chart.series.push(new am4charts.LineSeries());
+                    series.dataFields.valueY = countryCode;
+                    series.dataFields.categoryX = "day";
+                    series.name = countryCode+'_simul';
+                    series.strokeWidth = 1;
+                    series.minBulletDistance = 10;
+                    series.visible = true;
+                    series.stroke = am4core.color(data.countryColors[countryCode]);
+                }
+            }
+        };
+
+        if(data.countryData[Object.keys(data.countryData)[0]].simulPerMega)
+            addSeries2Chart();
+        else {
+            const retrieveSimulDataFromRemi = function(simulDataFromRemi, addSeries2Chart) {
+                for (let cName in data.countryData) {
+                    const isRealData = cName.indexOf('_') < 0;
+                    if (isRealData) {
+                        const countryData = data.countryData[cName];
+                        countryData.simul = {};
+                        const simulDataElem = simulDataFromRemi[cName];
+                        const first100ConfDate = countryData.first100ConfDate;
+                        for (let i = 0; i < simulDataElem.length; i++) {
+                            const entry = simulDataElem[i];
+                            if (new Date(entry.date) >= first100ConfDate) {
+                                if (!countryData.simul.data)
+                                    countryData.simul.data = [];
+                                countryData.simul.data.push(entry["cases_sim"]);
+                            }
+                        }
+
+                        const megas = countryData.pop / 1000000.0;
+                        countryData.simulPerMega = {data: []};
+                        for (let i = 0; i < (countryData.simul.data ? countryData.simul.data.length : 0); i++)
+                            countryData.simulPerMega.data.push(countryData.simul.data[i] / megas);
+                    }
+                }
+                addSeries2Chart();
+            };
+
+            cache4js.ajaxCache({
+                url:'https://raw.githubusercontent.com/RemiTheWarrior/epidemic-simulator/master/data/'+formatDate(new Date().plusDays(-1))+'.json',
+                dataType: 'json',
+                success: function (simulDataFromRemi) {
+                    retrieveSimulDataFromRemi(typeof simulDataFromRemi === 'string' ? JSON.parse(simulDataFromRemi) : simulDataFromRemi, addSeries2Chart);
+                },
+                error: function () {
+                    cache4js.ajaxCache({
+                        url:'https://raw.githubusercontent.com/RemiTheWarrior/epidemic-simulator/master/data/'+formatDate(new Date().plusDays(-2))+'.json',
+                        dataType: 'json',
+                        success: function (simulDataFromRemi) {
+                            retrieveSimulDataFromRemi(typeof simulDataFromRemi === 'string' ? JSON.parse(simulDataFromRemi) : simulDataFromRemi, addSeries2Chart);
+                        },
+                        error: function () {
+                            alert('Could not retrieve data for simulation.')
+                        }
+                    },DYNAMIC_DATA_EXPIRE_SECS);
+                }
+            },DYNAMIC_DATA_EXPIRE_SECS);
+        }
+    }
+};
+
+const removeSimulationFromConf = function(){
+    const chart = charts['conf_chart'];
+    if(chart){
+        let _2rem = [];
+        for(let i = 0 ; i < chart.series.length ; i++)
+            if(chart.series.values[i].name.indexOf('_simul')>0)
+                _2rem.push(i);
+
+        for(let i = _2rem.length-1 ; i >= 0 ; i--)
+            chart.series.removeIndex(_2rem[i]);
+    }
 };
 
 const makeSPARQLQuery = function( endpointUrl, sparqlQuery, successCallback ) {
@@ -629,15 +716,16 @@ const makeSPARQLQuery = function( endpointUrl, sparqlQuery, successCallback ) {
 const reload = function(){
     chosenCountries = [];
     allCountries = [];
+    $('input.add-simulation-chk').prop('checked',false);
+    removeSimulationFromConf();
     showLoader(true);
-    cache4js.setLocalNamespace('covid19_country_comparison');
     cache4js.ajaxCache({
         url:'https://pkgstore.datahub.io/core/population/population_json/data/43d34c2353cbd16a0aa8cadfb193af05/population_json.json',
         dataType: 'json',
         success: function (countryDataFromServer) {
             cache4js.ajaxCache({
                 url:'https://pomber.github.io/covid19/timeseries.json',
-                success: function (codvidDataFromPomber) {
+                success: function (covidDataFromPomber) {
                     const testDataEndpoint = 'https://query.wikidata.org/sparql',
                         testDataSparqlQuery = "SELECT ?date ?testNo ?countryLabel WHERE {\n" +
                             "  ?item wdt:P361 wd:Q83741704.\n" +
@@ -661,31 +749,11 @@ const reload = function(){
                                     if(chartCodesParam)
                                         chartsCodes = JSON.parse(atob(chartCodesParam));
 
-
-                                    $('#choose_countries_button').click(function () {
-                                        $('#choose_countries_modal').trigger('open');
-                                        onModalOpen();
-                                    });
-
-                                    $('#share_button').click(function () {
-                                        prompt('Copy and share this URL', 'https://cityxdev.github.io/covid19ByCountry/?countries=' + btoa(JSON.stringify(chosenCountries)));
-                                    });
-
-                                    $('button.embed-button').click(function () {
-                                        prompt(
-                                            'Embed this code into your website',
-                                            '<iframe src="https://cityxdev.github.io/covid19ByCountry/?embed=true'
-                                            + '&countries=' + btoa(JSON.stringify(chosenCountries))
-                                            +'&chartCodes='+btoa(JSON.stringify([$($(this).parents('div.chart-outer')[0]).data('code')]))
-                                            +'"></iframe>'
-                                        );
-                                    });
-
-                                    loadCountries(countryDataFromServer, codvidDataFromPomber);
+                                    loadCountries(countryDataFromServer, covidDataFromPomber);
 
                                     loadChosenCountries();
 
-                                    let data = retrieveData(codvidDataFromPomber, testingDataFromWikiData, testingDataFromOWID);
+                                    let data = retrieveData(covidDataFromPomber, testingDataFromWikiData, testingDataFromOWID);
                                     generateWeightedData(data);
 
                                     am4core.ready(function () {
@@ -788,6 +856,7 @@ const onModalOpen = function() {
 };
 
 $(function () {
+    cache4js.setLocalNamespace('covid19_country_comparison');
     if(getURLParamValue('embed')==='true'){
         $('.title').hide();
         $('.intro').hide();
@@ -795,6 +864,33 @@ $(function () {
         $('.day-0').hide();
         $('.embed-container').hide();
     }
+
+    $('#choose_countries_button').click(function () {
+        $('#choose_countries_modal').trigger('open');
+        onModalOpen();
+    });
+
+    $('#share_button').click(function () {
+        prompt('Copy and share this URL', 'https://cityxdev.github.io/covid19ByCountry/?countries=' + btoa(JSON.stringify(chosenCountries)));
+    });
+
+    $('button.embed-button').click(function () {
+        prompt(
+            'Embed this code into your website',
+            '<iframe src="https://cityxdev.github.io/covid19ByCountry/?embed=true'
+            + '&countries=' + btoa(JSON.stringify(chosenCountries))
+            +'&chartCodes='+btoa(JSON.stringify([$($(this).parents('div.chart-outer')[0]).data('code')]))
+            +'"></iframe>'
+        );
+    });
+
+    $('#add_simulation_conf').change(function () {
+        if($(this).is(':checked')){
+            addSimulation2Conf($('#conf_chart').data('currentdata'));
+        } else {
+            removeSimulationFromConf();
+        }
+    });
 
     reload();
 });
