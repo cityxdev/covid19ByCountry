@@ -112,6 +112,9 @@ div.chart-outer{
     display: none;
     position: relative;
 }
+div.chart-outer.dead{
+    margin-top: 50px;
+}
 
 div.chart-title{
     height: 50px;
