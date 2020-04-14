@@ -141,6 +141,8 @@ const loadCountries = function(countryDataFromServer,covidDataFromServer){
     const transformCountryName = function(name) {
         if(name==='United States')
             return 'US';
+        if(name==='Czech Republic')
+            return 'Czechia';
         return name;
     };
 
@@ -201,6 +203,8 @@ const retrieveTestingDataFromOWID = function(from, to) {
     const dataSourceCountryName2CountryName = function (dataSourceCountryName) {
         if (dataSourceCountryName === 'United States')
             return 'US';
+        if (dataSourceCountryName === 'Czech Republic')
+            return 'Czechia';
         return dataSourceCountryName;
     };
 
