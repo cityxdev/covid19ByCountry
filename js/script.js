@@ -558,82 +558,122 @@ const drawChart = function(elemId,data,countryColors) {
     $($('#'+elemId).parents('div.chart-outer')[0]).css('display','block');
 };
 
-const generateChartData = function (fromDataName,data) {
-    let res = [];
-    for (let count = 0; count <= data.confMaxDelta; count++) {
-        const elem = {
-            day: count
-        };
-        for (let cName in data.countryData) {
-            let country = data.countryData[cName];
-            elem[cName] = country[fromDataName] && count < country[fromDataName].data.length
-                ? country[fromDataName].data[count]
-                : null;
-        }
-        res.push(elem);
-    }
-    return res;
-};
-
 const createCharts = function(data,chartsCodes) {
-    data.confMaxDelta=0;
+    let  confMaxDelta=0;
     data.countryColors={};
     for (let cName in data.countryData) {
         let country = data.countryData[cName];
         data.countryColors[cName]=data.countryData[cName].color;
-        data.confMaxDelta = data.confMaxDelta=Math.max(data.confMaxDelta,country.conf.data?country.conf.data.length-1:0);
+        confMaxDelta =Math.max(confMaxDelta,country.conf.data?country.conf.data.length-1:0);
     }
+
+    const generateChartData = function (fromDataName,data,confMaxDelta) {
+        let res = [];
+        for (let count = 0; count <= confMaxDelta; count++) {
+            const elem = {
+                day: count
+            };
+            for (let cName in data.countryData) {
+                let country = data.countryData[cName];
+                elem[cName] = country[fromDataName] && count < country[fromDataName].data.length
+                    ? country[fromDataName].data[count]
+                    : null;
+            }
+            res.push(elem);
+        }
+        return res;
+    };
 
     let charts2Show = chartsCodes.length===0
         ? ['conf','active','dead','dead-per-conf','reco-per-conf','test','test-positive']
         : chartsCodes;
 
-    if(charts2Show.indexOf('conf')>=0) {
-        drawChart('conf_chart', generateChartData('confPerMega', data), data.countryColors);
-        $('#conf_chart').data('currentdata',data);
-    } else $('#conf_chart').data('currentdata',undefined);
+    if(charts2Show.indexOf('conf')>=0)
+        drawChart('conf_chart', generateChartData('confPerMega', data, confMaxDelta), data.countryColors);
 
-    if(charts2Show.indexOf('active')>=0)
-        drawChart('active_chart', generateChartData('activePerMega',data), data.countryColors);
+    if(charts2Show.indexOf('active')>=0) {
+        drawChart('active_chart', generateChartData('activePerMega', data, confMaxDelta), data.countryColors);
+        $('#active_chart').data('currentdata',data);
+    } else $('#active_chart').data('currentdata',undefined);
 
     if(charts2Show.indexOf('dead')>=0)
-        drawChart('dead_chart', generateChartData('deadPerMega',data), data.countryColors);
+        drawChart('dead_chart', generateChartData('deadPerMega',data, confMaxDelta), data.countryColors);
 
     if(charts2Show.indexOf('dead-per-conf')>=0)
-        drawChart('dead_per_conf_chart', generateChartData('deadPerConf',data), data.countryColors);
+        drawChart('dead_per_conf_chart', generateChartData('deadPerConf',data, confMaxDelta), data.countryColors);
 
     if(charts2Show.indexOf('reco-per-conf')>=0)
         drawChart('reco_per_conf_chart', generateChartData('recoPerConf',data), data.countryColors);
 
     if(charts2Show.indexOf('test')>=0)
-        drawChart('test_chart', generateChartData('testPerMega',data), data.countryColors);
+        drawChart('test_chart', generateChartData('testPerMega',data, confMaxDelta), data.countryColors);
 
     if(charts2Show.indexOf('test-positive')>=0)
-        drawChart('conf_per_test_chart', generateChartData('confPerTest',data), data.countryColors);
+        drawChart('conf_per_test_chart', generateChartData('confPerTest',data, confMaxDelta), data.countryColors);
 };
 
-const addSimulation2Conf = function(data){
-    const chart = charts['conf_chart'];
+const addSimulation2Active = function(data){
+    const chart = charts['active_chart'];
     if(chart){
         const formatDate = function (date) {
             return date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate();
         };
 
         const addSeries2Chart = function(){
-            const data4Chart = generateChartData('simulPerMega',data);
+            let simulMaxDelta = 0;
+            for (let cName in data.countryData) {
+                let country = data.countryData[cName];
+                simulMaxDelta = Math.max(simulMaxDelta,country.activePerMega&&country.activePerMega.data?country.activePerMega.data.length-1:0);
+            }
+            simulMaxDelta+=5;
 
-            for(let countryCode in data.countryColors){
-                const isRealData = countryCode.indexOf('_')<0;
+            const generateChartData = function (fromDataName,data,simulMaxDelta) {
+                let res = [];
+                for (let count = 0; count <= simulMaxDelta; count++) {
+                    const elem = {
+                        day: count
+                    };
+                    for (let cName in data.countryData) {
+                        let country = data.countryData[cName];
+                        elem[cName] = country[fromDataName] && count < country[fromDataName].data.length && count<country.activePerMega.data.length+5
+                            ? country[fromDataName].data[count]
+                            : null;
+                    }
+                    res.push(elem);
+                }
+                return res;
+            };
+
+            const data4Chart = generateChartData('simulPerMega',data,simulMaxDelta);
+
+            for(let cName in data.countryColors){
+                const isRealData = cName.indexOf('_')<0;
                 if(isRealData) {
-                    chart.data[countryCode+'_simul']=data4Chart[countryCode];
                     const series = chart.series.push(new am4charts.LineSeries());
-                    series.dataFields.valueY = countryCode;
+                    series.dataFields.valueY = cName+'_simul';
                     series.dataFields.categoryX = "day";
-                    series.name = countryCode+'_simul';
+                    series.name = cName+'_simul';
                     series.strokeWidth = 1;
                     series.minBulletDistance = 10;
                     series.visible = true;
-                    series.stroke = am4core.color(data.countryColors[countryCode]);
+                    series.stroke = am4core.color(data.countryColors[cName]);
+                    series.strokeDasharray = 4;
+                }
+            }
+
+            let i = 0;
+            for( ; i < chart.data.length ; i++){
+                const line = data4Chart[i];
+                for(let cName in data.countryColors)
+                    chart.data[i][cName+'_simul']=line[cName];
+            }
+            for( ; i < data4Chart.length ; i++) {
+                const newLine = {};
+                chart.data.push(newLine);
+                for(let cName in data.countryColors){
+                    newLine.day=data4Chart[i].day;
+                    newLine[cName+'_simul']=data4Chart[i][cName];
+                    newLine[cName]=null;
                 }
             }
         };
@@ -642,6 +682,7 @@ const addSimulation2Conf = function(data){
             addSeries2Chart();
         else {
             const retrieveSimulDataFromRemi = function(simulDataFromRemi, addSeries2Chart) {
+                const _10DaysFromNow = new Date().plusDays(10);
                 for (let cName in data.countryData) {
                     const isRealData = cName.indexOf('_') < 0;
                     if (isRealData) {
@@ -649,9 +690,10 @@ const addSimulation2Conf = function(data){
                         countryData.simul = {};
                         const simulDataElem = simulDataFromRemi[cName];
                         const first100ConfDate = countryData.first100ConfDate;
-                        for (let i = 0; i < simulDataElem.length; i++) {
+                        for (let i = 1; i < simulDataElem.length; i+=2) {
                             const entry = simulDataElem[i];
-                            if (new Date(entry.date) >= first100ConfDate) {
+                            const date = new Date(entry.date);
+                            if (date >= first100ConfDate && date<= _10DaysFromNow) {
                                 if (!countryData.simul.data)
                                     countryData.simul.data = [];
                                 countryData.simul.data.push(entry["cases_sim"]);
@@ -690,8 +732,8 @@ const addSimulation2Conf = function(data){
     }
 };
 
-const removeSimulationFromConf = function(){
-    const chart = charts['conf_chart'];
+const removeSimulationFromActive = function(){
+    const chart = charts['active_chart'];
     if(chart){
         let _2rem = [];
         for(let i = 0 ; i < chart.series.length ; i++)
@@ -717,7 +759,6 @@ const reload = function(){
     chosenCountries = [];
     allCountries = [];
     $('input.add-simulation-chk').prop('checked',false);
-    removeSimulationFromConf();
     showLoader(true);
     cache4js.ajaxCache({
         url:'https://pkgstore.datahub.io/core/population/population_json/data/43d34c2353cbd16a0aa8cadfb193af05/population_json.json',
@@ -884,11 +925,11 @@ $(function () {
         );
     });
 
-    $('#add_simulation_conf').change(function () {
+    $('#add_simulation_active').change(function () {
         if($(this).is(':checked')){
-            addSimulation2Conf($('#conf_chart').data('currentdata'));
+            addSimulation2Active($('#active_chart').data('currentdata'));
         } else {
-            removeSimulationFromConf();
+            removeSimulationFromActive();
         }
     });
 
