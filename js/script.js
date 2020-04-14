@@ -58,6 +58,16 @@ Number.prototype.pad = function(size) {
 };
 
 
+const lastNonNullNonUndefinedValue = function (arr) {
+    if(!arr)
+        return null;
+    for(let i = arr.length-1 ; i>=0 ; i--)
+        if(arr[i]!==null && arr[i]!==undefined)
+            return arr[i];
+    return null;
+};
+
+
 const daysBetween = function (firstDate, secondDate) {
     const oneDay = 24 * 60 * 60 * 1000; // hours*minutes*seconds*milliseconds
     return Math.round(Math.abs((firstDate - secondDate) / oneDay));
@@ -252,7 +262,12 @@ const retrieveTestingDataFromOWID = function(from, to) {
 
                 try {
                     let valueIndex = getValueIndexForCountryName(cName);
-                    countryData.test.data.push(values[valueIndex] && values[valueIndex].trim() !== '' ? Number(values[valueIndex]) : null);
+                    const lastVal = lastNonNullNonUndefinedValue(countryData.test.data);
+                    countryData.test.data.push(
+                        values[valueIndex] && values[valueIndex].trim() !== '' && (lastVal===null || Number(values[valueIndex])>=lastVal)
+                        ? Number(values[valueIndex])
+                        : null
+                    );
                 } catch (e) {
                     console.log(e);
                     countryData.test.data.push(null);
@@ -314,8 +329,9 @@ const retrieveTestingDateFromWikiData = function(from, to){
             }
 
             try {
+                const lastVal = lastNonNullNonUndefinedValue(country.test.data);
                 country.test.data.push(
-                    entry.testNo.value!==null&&entry.testNo.value!==undefined&&entry.testNo.value.trim()!==''
+                    entry.testNo.value!==null&&entry.testNo.value!==undefined&&entry.testNo.value.trim()!==''&& (lastVal===null||Number(entry.testNo.value)>=lastVal)
                         ? Number(entry.testNo.value)
                         : null
                 );
@@ -341,7 +357,8 @@ const retrieveDataFromPomber = function(from, to) {
         for (let i = 0; i < covidDataElem.length; i++) {
             let entry = covidDataElem[i];
 
-            if (entry.confirmed >= SERIES_ALIGNMENT_MINIMUM) {
+            const conf = entry.confirmed;
+            if (conf >= SERIES_ALIGNMENT_MINIMUM) {
 
                 if (!countryData.conf.data) {
                     countryData.first100ConfDate=new Date(entry.date);
@@ -350,9 +367,15 @@ const retrieveDataFromPomber = function(from, to) {
                     countryData.reco.data = [];
                 }
 
-                countryData.conf.data.push(entry.confirmed);
-                countryData.dead.data.push(!entry.deaths?0:entry.deaths);
-                countryData.reco.data.push(!entry.recovered?0:entry.recovered);
+                const lastConf = lastNonNullNonUndefinedValue(countryData.conf.data);
+                const lastReco = lastNonNullNonUndefinedValue(countryData.reco.data);
+                const lastDead = lastNonNullNonUndefinedValue(countryData.dead.data);
+
+                const dead = !entry.deaths?null:entry.deaths;
+                const reco = !entry.recovered?null:entry.recovered;
+                countryData.conf.data.push(conf!==null&&lastConf!==null && lastConf>conf ? null : conf);
+                countryData.dead.data.push(dead!==null&&lastDead!==null && lastDead>dead ? null : dead);
+                countryData.reco.data.push(reco!==null&&lastReco!==null && lastReco>reco ? null : reco);
             }
         }
     }
@@ -441,19 +464,19 @@ const generateWeightedData = function(data) {
 
         country.confPerMega = {data: []};
         for (let i = 0; i < (country.conf.data?country.conf.data.length:0) ; i++)
-            country.confPerMega.data.push(country.conf.data[i] / megas);
+            country.confPerMega.data.push(country.conf.data[i]===null ? null : (country.conf.data[i] / megas));
 
         country.deadPerMega = {data: []};
         for (let i = 0; i < (country.dead.data?country.dead.data.length:0) ; i++)
-            country.deadPerMega.data.push(country.dead.data[i] / megas);
+            country.deadPerMega.data.push(country.dead.data[i]===null ? null : (country.dead.data[i] / megas));
 
         country.deadPerConf = {data: []};
         for (let i = 0; i < (country.dead.data?country.dead.data.length:0) ; i++)
-            country.deadPerConf.data.push(country.dead.data[i] / country.conf.data[i] * 100);
+            country.deadPerConf.data.push(country.dead.data[i]===null || country.conf.data[i]===null ? null : (country.dead.data[i] / country.conf.data[i] * 100));
 
         country.recoPerConf = {data: []};
         for (let i = 0; i < (country.reco.data?country.reco.data.length:0) ; i++)
-            country.recoPerConf.data.push(country.reco.data[i] / country.conf.data[i] * 100);
+            country.recoPerConf.data.push(country.reco.data[i]===null || country.conf.data[i]===null ? null : (country.reco.data[i] / country.conf.data[i] * 100));
 
 
         country.activePerMega = {data:[]};
@@ -462,7 +485,7 @@ const generateWeightedData = function(data) {
             const reco = country.reco.data && country.reco.data.length>i ? country.reco.data[i] : null;
             const dead = country.dead.data && country.dead.data.length>i ? country.dead.data[i] : null;
             const active = conf===null || reco===null || dead===null ? null : conf-(reco+dead);
-            country.activePerMega.data.push(active / megas);
+            country.activePerMega.data.push(active!==null ? (active / megas) : null);
         }
 
         let testDataProblem = false;
@@ -603,7 +626,7 @@ const createCharts = function(data,chartsCodes) {
         drawChart('dead_per_conf_chart', generateChartData('deadPerConf',data, confMaxDelta), data.countryColors);
 
     if(charts2Show.indexOf('reco-per-conf')>=0)
-        drawChart('reco_per_conf_chart', generateChartData('recoPerConf',data), data.countryColors);
+        drawChart('reco_per_conf_chart', generateChartData('recoPerConf',data, confMaxDelta), data.countryColors);
 
     if(charts2Show.indexOf('test')>=0)
         drawChart('test_chart', generateChartData('testPerMega',data, confMaxDelta), data.countryColors);
