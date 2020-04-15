@@ -1,8 +1,8 @@
 body{
-    font-family: "Courier New", Courier, monospace;
+    font-family: 'Muli', sans-serif;
     background-color: #EAEAEA;
     color: #000091;
-    padding: 20px 10px;
+    padding: 20px 0;
 }
 
 h1{
@@ -12,12 +12,22 @@ h1{
 }
 
 button{
-    text-transform: uppercase;
-    border-radius: 4px;
+    height: 28px;
+    border-radius: 14px;
     font-size: 12px;
+    font-weight: bold;
+    color: #EAEAEA;
+    background-color: #000091;
     border: 0;
     line-height: 1.5;
-    padding-top: 4px;
+    padding: 4px 26px;
+    margin-left: 10px;
+}
+button.inverse{
+    background-color: #EAEAEA;
+    color: #000091;
+    border: 2px solid #000091;
+
 }
 
 label.checkbox-label{
@@ -27,13 +37,22 @@ input[type=checkbox]{
     vertical-align: middle;
 }
 
+a{
+    color: #000091;
+    font-weight: bold;
+}
+a:hover{
+    text-decoration: none;
+}
+
 div.intro{
+    text-align: center;
     font-size: 16px;
     margin-right: 10%;
     margin-left: 10%;
     margin-bottom: 10px;
-    background-color: #efefef;
     padding: 10px;
+    color: black;
 }
 @media only screen and (max-width: 800px) {
     div.intro {
@@ -42,23 +61,30 @@ div.intro{
 }
 
 div.menu{
+    text-align: center;
     margin-right: 10%;
-    text-align: right;
+    margin-left: 10%;
     margin-bottom: 10px;
 }
 
-div.menu button{
-    font-weight: bold;
-}
 
 label{
     font-weight: bold;
 }
 
-.day-0 .chart-container,
-.day-0 .chart-desc{
+.day-0{
     background-color: #ddd;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    margin-top: 50px;
 }
+.day-0 .chart-title,
+.day-0 .chart-container{
+    margin-left: 10%;
+    margin-right: 10%;
+    text-align: center;
+}
+
 .day-0 .chart-desc{
     padding: 5px 5px 10px;
 }
@@ -71,13 +97,38 @@ label{
 #country_details_table{
     padding-top: 10px;
     font-size: 13px;
-    margin-left: 10px;
-    margin-bottom: 10px;
-    margin-top: 20px;
+    margin: 10px auto 10px;
+    color: #444444;
+}
+#country_details_table tbody tr td:first-child,
+#country_details_table thead tr th:first-child{
+    padding-left: 80px;
 }
 #country_details_table tbody tr td:last-child,
 #country_details_table thead tr th:last-child{
     text-align: right;
+    padding-right: 80px;
+}
+@media only screen and (max-width: 800px) {
+    #country_details_table tbody tr td:first-child,
+    #country_details_table thead tr th:first-child{
+        padding-left: 10px;
+    }
+    #country_details_table tbody tr td:last-child,
+    #country_details_table thead tr th:last-child{
+        padding-right: 10px;
+    }
+
+}
+#country_details_table tbody tr td:not(:last-child){
+    text-align: left;
+}
+#country_details_table thead tr th{
+    font-weight: bold;
+}
+
+#country_details_table tbody tr:nth-child(odd){
+    background-color: #EAEAEA;
 }
 #country_details_table thead tr th,
 #country_details_table tbody tr td{
@@ -88,14 +139,9 @@ label{
 }
 #country_details_table thead tr th{
     padding-top: 10px;
-    border-bottom: 1px solid #000091;
+    border-bottom: 2px solid #999999;
 }
-#country_details_table tbody tr:not(:last-child) td{
-    border-bottom: 1px solid #EAEAEA;
-}
-#country_details_table tbody tr td:not(:last-child){
-    border-right: 1px solid #EAEAEA;
-}
+
 @media only screen and (max-width: 800px) {
     #country_details_table{
         font-size: 12px;
@@ -103,6 +149,11 @@ label{
     #country_details_table thead tr th:not(:last-child){
         padding-right: 10px;
     }
+}
+
+#charts{
+    margin-left: 5%;
+    margin-right: 5%;
 }
 
 div.chart-outer{
@@ -117,7 +168,7 @@ div.chart-outer.dead{
 }
 
 div.chart-title{
-    height: 50px;
+    text-align: center;
 }
 div.chart-title h2{
     font-size: 20px;
@@ -131,7 +182,7 @@ div.chart-title h2{
 }
 
 .chart-desc{
-    font-style: italic;
+    color:#444444;
 }
 
 div.chart-inner{
@@ -167,10 +218,6 @@ div.embed-container{
 }
 
 
-#choose_countries_button, #share_button, .embed-button{
-    background-color: #000091;
-    color: #FFFFFF;
-}
 
 #active_countries{
     padding: 0;
@@ -186,8 +233,9 @@ div.modal-body li button.menu-button {
     width: 20px;
     margin-right: 10px;
     font-size: 20px;
-    line-height: 1;
-    padding-left: 5px;
+    line-height: 0.7;
+    padding-left: 4.5px;
+    padding-right: 5px;
     padding-top: 1px;
 }
 
@@ -281,9 +329,9 @@ body.modal-open {
     padding: 0;
     text-align: center;
     text-shadow: none;
-    line-height: 1;
     margin: 4px 0 0;
     cursor: pointer;
+    line-height: 0.8;
 }
 
 .modal .modal-header .title{
