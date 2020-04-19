@@ -26,15 +26,15 @@
     <meta property="twitter:card" content="">
     <meta property="twitter:image" content="img/covid.png">
 
-    <script>
-        !function(g,s,q,r,d){r=g[r]=g[r]||function(){(r.q=r.q||[]).push(
-            arguments)};d=s.createElement(q);q=s.getElementsByTagName(q)[0];
-            d.src='//d1l6p2sc9645hc.cloudfront.net/tracker.js';q.parentNode.
-            insertBefore(d,q)}(window,document,'script','_gs');
+    <!--<script>-->
+        <!--!function(g,s,q,r,d){r=g[r]=g[r]||function(){(r.q=r.q||[]).push(-->
+            <!--arguments)};d=s.createElement(q);q=s.getElementsByTagName(q)[0];-->
+            <!--d.src='//d1l6p2sc9645hc.cloudfront.net/tracker.js';q.parentNode.-->
+            <!--insertBefore(d,q)}(window,document,'script','_gs');-->
 
-        _gs('GSN-559944-I');
-        _gs('set', 'anonymizeIP', true);
-    </script>
+        <!--_gs('GSN-559944-I');-->
+        <!--_gs('set', 'anonymizeIP', true);-->
+    <!--</script>-->
 
     <script type="text/javascript" src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
 
@@ -49,6 +49,7 @@
     <script type="text/javascript" src="https://cdn.jsdelivr.net/gh/cityxdev/cache4.js@master/cache4.js"></script>
 
     <script type="text/javascript" src="js/modal.js"></script>
+    <script type="text/javascript" src="js/util.js"></script>
     <script type="text/javascript" src="js/script.js"></script>
 
     <link href="https://fonts.googleapis.com/css2?family=Muli:wght@400;700&display=swap" rel="stylesheet">
@@ -72,9 +73,32 @@
         <h2>Country details</h2>
         <div class="chart-desc">The day 0 of each country is the date when it reached 100 confirmed cases</div>
     </div>
-    <div class="chart-container"><table id="country_details_table"><thead><tr><th>Country</th><th>Day 0</th><th>Population</th></tr></thead><tbody></tbody></table></div>
+    <div class="table-container"><table id="country_details_table"><thead><tr><th>Country</th><th>Day 0</th><th>Population</th></tr></thead><tbody></tbody></table></div>
 </div>
 <div id="charts">
+
+    <div class="chart-outer active" data-code="active">
+        <div class="chart-title">
+            <h2>Active cases per million inhab</h2>
+        </div>
+        <div class="chart-inner">
+            <div class="add-simul-container"><label class="checkbox-label"><input type="checkbox" class="add-simulation-chk" id="add_simulation_active"/>show simulation</label></div>
+            <div class="chart-container" id="active_chart"></div>
+        </div>
+        <div class="embed-container"><button class="embed-button">embed</button></div>
+    </div>
+
+    <div class="chart-outer active-diff" data-code="active-diff">
+        <div class="chart-title">
+            <h2>Active cases daily growth (%)</h2>
+            <div class="chart-desc">Smoothed with moving average</div>
+        </div>
+        <div class="chart-inner">
+            <div class="add-context-container"><label class="checkbox-label"><input type="checkbox" class="add-context-chk" id="add_context_active_diff"/>show mobility daily deviation from baseline (%) [Google]</label></div>
+            <div class="chart-container" id="active_diff_chart"></div>
+        </div>
+        <div class="embed-container"><button class="embed-button">embed</button></div>
+    </div>
 
     <div class="chart-outer conf" data-code="conf">
         <div class="chart-title">
@@ -86,13 +110,13 @@
         <div class="embed-container"><button class="embed-button">embed</button></div>
     </div>
 
-    <div class="chart-outer active" data-code="active">
+    <div class="chart-outer conf-diff" data-code="conf-diff">
         <div class="chart-title">
-            <h2>Active cases per million inhab</h2>
+            <h2>Confirmed cases daily growth (%)</h2>
+            <div class="chart-desc">Smoothed with moving average</div>
         </div>
         <div class="chart-inner">
-            <div class="add-simul-container"><label class="checkbox-label"><input type="checkbox" class="add-simulation-chk" id="add_simulation_active"/>show simulation</label></div>
-            <div class="chart-container" id="active_chart"></div>
+            <div class="chart-container" id="conf_diff_chart"></div>
         </div>
         <div class="embed-container"><button class="embed-button">embed</button></div>
     </div>
@@ -189,13 +213,14 @@
                     <br/> Of course this is not perfect and does not take into account demography or population density, but it is an effort in that direction.
                 </p>
                 <p>Data about testing is not easy to get in a usable format, and is not collected for many countries, thus the test charts may be a bit empty.</p>
-                <p>The always present "10%Growth_5Mppl" data series is a model of a 5 million people country, with 100 confirmed cases on day 0 and a consistent growth of 10% per day. It also has consistent fatality and recovery rates of 5% and 15%. Finally, testing grows 10% per day, starting from 500 on day 0. Useful for comparison purposes.</p>
+                <p>The always present "10%-5Mppl" data series is a model of a 5 million people country, with 100 confirmed cases on day 0 and a consistent growth of 10% per day. It also has consistent fatality and recovery rates of 5% and 15%. Finally, testing grows 10% per day, starting from 500 on day 0. Useful for comparison purposes.</p>
                 <br/><br/>
                 <p><b>Sources</b>
                     <br/>COVID-19 data: <a target="_blank" href="https://github.com/pomber/covid19">Pomber</a>
                     <br/>Testing data: <a target="_blank" href="https://www.wikidata.org/wiki/Q86901049">Wikidata</a> and <a target="_blank" href="https://github.com/owid/covid-19-data">Our World in Data</a>
                     <br/>Simulation data: <a target="_blank" href="https://github.com/RemiTheWarrior/epidemic-simulator">epidemic-simulator</a>
-                    <br/>Population data: <a target="_blank" href="https://datahub.io/core/population">DataHub.io</a></p>
+                    <br/>Google Mobility data: <a target="_blank" href="https://github.com/cityxdev/covid19GoogleMobilityJSON">CityXDev</a>
+                    <br/>Country and population data: <a target="_blank" href="https://github.com/lukes/ISO-3166-Countries-with-Regional-Codes">lukes</a> and <a target="_blank" href="https://datahub.io/core/population">DataHub.io</a></p>
                 <br/>
                 <p>For any questions or suggestions, please contact: cityxdev@gmail.com</p>
 

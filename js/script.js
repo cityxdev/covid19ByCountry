@@ -1,126 +1,3 @@
-navigator.sayswho= (function(){
-    var ua= navigator.userAgent, tem,
-        M= ua.match(/(opera|chrome|safari|firefox|msie|trident(?=\/))\/?\s*(\d+)/i) || [];
-    if(/trident/i.test(M[1])){
-        tem=  /\brv[ :]+(\d+)/g.exec(ua) || [];
-        return 'IE '+(tem[1] || '');
-    }
-    if(M[1]=== 'Chrome'){
-        tem= ua.match(/\b(OPR|Edge)\/(\d+)/);
-        if(tem!= null) return tem.slice(1).join(' ').replace('OPR', 'Opera');
-    }
-    M= M[2]? [M[1], M[2]]: [navigator.appName, navigator.appVersion, '-?'];
-    if((tem= ua.match(/version\/(\d+)/i))!= null) M.splice(1, 1, tem[1]);
-    return M.join(' ');
-})();
-var isOpera = navigator.sayswho.indexOf('Opera')===0;
-var isFirefox = navigator.sayswho.indexOf('Firefox')===0;
-var isSafari = navigator.sayswho.indexOf('Safari')===0;
-var isChrome = navigator.sayswho.indexOf('Chrome')===0;
-var isIE = navigator.sayswho.indexOf('IE')===0;
-var isEdge = navigator.sayswho.indexOf('Edge')===0;
-
-
-const localeCompareStrings = function( a, b ) {
-    if(!a&&!b)
-        return 0;
-    if(!a)
-        return-1;
-    if (!b)
-        return 1;
-    return a.toLowerCase().localeCompare(b.toLowerCase());
-};
-
-
-const getWidth=function() {
-    return isMobile() ? screen.width : window.innerWidth;
-};
-
-const getHeight=function() {
-    return isMobile() ? screen.height : window.innerHeight;
-};
-
-const isMobile=function() {
-    var isMobile = false;
-    // device detection
-    if (/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|ipad|iris|kindle|Android|Silk|lge |maemo|midp|mmp|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows (ce|phone)|xda|xiino/i.test(navigator.userAgent)
-        || /1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i.test(navigator.userAgent.substr(0, 4))) {
-        isMobile = true;
-    }
-    return isMobile;
-};
-
-
-Number.prototype.pad = function(size) {
-    let s = String(this);
-    while (s.length < (size || 2)) {s = "0" + s;}
-    return s;
-};
-
-
-const lastNonNullNonUndefinedValue = function (arr) {
-    if(!arr)
-        return null;
-    for(let i = arr.length-1 ; i>=0 ; i--)
-        if(arr[i]!==null && arr[i]!==undefined)
-            return arr[i];
-    return null;
-};
-
-
-const daysBetween = function (firstDate, secondDate) {
-    const oneDay = 24 * 60 * 60 * 1000; // hours*minutes*seconds*milliseconds
-    return Math.round(Math.abs((firstDate - secondDate) / oneDay));
-};
-Date.prototype.plusDays = function(days) {
-    var date = new Date(this.valueOf());
-    date.setDate(date.getDate() + days);
-    return date;
-};
-const formatDate = function (date) {
-    return date.getFullYear() + "/" + (date.getMonth() + 1).pad(2) + "/" + date.getDate().pad(2);
-};
-
-
-const showLoader = function (immediatly) {
-    let loader = $('div.loader-container');
-    if(!immediatly) {
-        if (!loader.data('timeoutId'))
-            loader.data('timeoutId', []);
-        let timeoutId = setTimeout(function () {
-            loader.show();
-        }, 300);
-        loader.data('timeoutId').push(timeoutId);
-    } else loader.show();
-};
-
-const hideLoader = function () {
-    let loader = $('div.loader-container');
-    loader.hide();
-    let timeoutId = loader.data('timeoutId');
-    if(timeoutId)
-        for (let t in timeoutId)
-            clearTimeout(timeoutId[t]);
-    loader.data('timeoutId', []);
-};
-
-
-
-const getURLParamValue = function (parameterName) {
-    var result = null,
-        tmp = [];
-    location.search
-        .substr(1)
-        .split("&")
-        .forEach(function (item) {
-            tmp = item.split("=");
-            if (tmp[0] === parameterName) result = decodeURIComponent(tmp[1]);
-        });
-    return result;
-};
-
-
-
 const COUNTRY_CODES_CACHE_KEY = 'countryCodes';
 
 const SERIES_ALIGNMENT_MINIMUM = 100;
@@ -136,6 +13,12 @@ let chosenCountries = [];
 let allCountries = [];
 let charts = {};
 
+const countryForCode = function (code) {
+    for(let c in allCountries)
+        if(allCountries[c].code===code)
+            return allCountries[c];
+    return null;
+};
 
 const loadCountries = function(countryDataFromServer,covidDataFromServer){
     const transformCountryName = function(name) {
@@ -151,7 +34,7 @@ const loadCountries = function(countryDataFromServer,covidDataFromServer){
         const popElem = countryDataFromServer[e];
         const name = transformCountryName(popElem["Country Name"]);
         if(covidDataFromServer[name] && !visitedCountries[name])
-            visitedCountries[name]={code: popElem["Country Code"],name: name, pop: undefined, popYear: undefined};
+            visitedCountries[name]={code: popElem["Country Code"], alpha2Code:undefined, name: name, pop: undefined, popYear: undefined};
 
         if(visitedCountries[name] &&
             (visitedCountries[name].popYear===undefined || visitedCountries[name].pop===undefined || visitedCountries[name].popYear<popElem["Year"])){
@@ -159,18 +42,26 @@ const loadCountries = function(countryDataFromServer,covidDataFromServer){
             visitedCountries[name].popYear=popElem["Year"];
         }
     }
+
     allCountries=[];
     let allCodes = Object.keys(visitedCountries);
     allCodes.sort(localeCompareStrings);
     for(let c in allCodes)
         allCountries.push(visitedCountries[allCodes[c]]);
-};
 
-const countryForCode = function (code) {
-    for(let c in allCountries)
-        if(allCountries[c].code===code)
-            return allCountries[c];
-    return null;
+    cache4js.ajaxCache({
+        url: 'https://raw.githubusercontent.com/lukes/ISO-3166-Countries-with-Regional-Codes/master/all/all.json',
+        dataType: 'json',
+        success: function (cData) {
+            let parsedData = (typeof cData) === 'string' ? JSON.parse(cData) : cData;
+            for(let c in parsedData){
+                let country = parsedData[c];
+                const forCode = countryForCode(country["alpha-3"]);
+                if(forCode)
+                    forCode.alpha2Code=country["alpha-2"];
+            }
+        }
+    },STATIC_DATA_EXPIRE_SECS);
 };
 
 const loadChosenCountries = function() {
@@ -269,8 +160,8 @@ const retrieveTestingDataFromOWID = function(from, to) {
                     const lastVal = lastNonNullNonUndefinedValue(countryData.test.data);
                     countryData.test.data.push(
                         values[valueIndex] && values[valueIndex].trim() !== '' && (lastVal===null || Number(values[valueIndex])>=lastVal)
-                        ? Number(values[valueIndex])
-                        : null
+                            ? Number(values[valueIndex])
+                            : null
                     );
                 } catch (e) {
                     console.log(e);
@@ -362,7 +253,25 @@ const retrieveDataFromPomber = function(from, to) {
             let entry = covidDataElem[i];
 
             const conf = entry.confirmed;
-            if (conf >= SERIES_ALIGNMENT_MINIMUM) {
+            if(conf>0&&conf<SERIES_ALIGNMENT_MINIMUM){
+                if(!countryData.intial){
+                    countryData.firstConfDate=new Date(entry.date);
+                    countryData.initial = {conf:{},dead:{},reco:{}};
+                    countryData.initial.conf.data = [];
+                    countryData.initial.dead.data = [];
+                    countryData.initial.reco.data = [];
+                }
+                const lastConf = lastNonNullNonUndefinedValue(countryData.initial.conf.data);
+                const lastReco = lastNonNullNonUndefinedValue(countryData.initial.reco.data);
+                const lastDead = lastNonNullNonUndefinedValue(countryData.initial.dead.data);
+
+                const dead = !entry.deaths?null:entry.deaths;
+                const reco = !entry.recovered?null:entry.recovered;
+                countryData.initial.conf.data.push(conf!==null && lastConf!==null && lastConf>conf ? null : conf);
+                countryData.initial.dead.data.push(dead!==null && lastDead!==null && lastDead>dead ? null : dead);
+                countryData.initial.reco.data.push(reco!==null && lastReco!==null && lastReco>reco ? null : reco);
+
+            } else if (conf >= SERIES_ALIGNMENT_MINIMUM) {
 
                 if (!countryData.conf.data) {
                     countryData.first100ConfDate=new Date(entry.date);
@@ -377,16 +286,16 @@ const retrieveDataFromPomber = function(from, to) {
 
                 const dead = !entry.deaths?null:entry.deaths;
                 const reco = !entry.recovered?null:entry.recovered;
-                countryData.conf.data.push(conf!==null&&lastConf!==null && lastConf>conf ? null : conf);
-                countryData.dead.data.push(dead!==null&&lastDead!==null && lastDead>dead ? null : dead);
-                countryData.reco.data.push(reco!==null&&lastReco!==null && lastReco>reco ? null : reco);
+                countryData.conf.data.push(conf!==null && lastConf!==null && lastConf>conf ? null : conf);
+                countryData.dead.data.push(dead!==null && lastDead!==null && lastDead>dead ? null : dead);
+                countryData.reco.data.push(reco!==null && lastReco!==null && lastReco>reco ? null : reco);
             }
         }
     }
 };
 
 const generateModelData = function(to) {
-    let modelName = '10%Growth_5Mppl';
+    let modelName = '10%-5Mppl';
     to.countryData[modelName] = {
         first100ConfDate: new Date('2020-02-15'),
         color: '#FF00FF',
@@ -422,8 +331,8 @@ const generateCountryDetails = function(data) {
         countryDetailsTBody.append(
             '<tr>' +
             '<td>' + country.name+ '</td>' +
-            '<td>'+(country.first100ConfDate?formatDate(country.first100ConfDate):'--')+'</td>' +
-            '<td>'+country.pop.toLocaleString('en-US')+' (year: '+country.popYear+')</td>' +
+            '<td>'+(country.first100ConfDate?formatDate(country.first100ConfDate,'/',true):'--')+'</td>' +
+            '<td>'+country.pop.toLocaleString('en-US')+' (yr: '+country.popYear+')</td>' +
             '</tr>'
         );
     }
@@ -467,8 +376,31 @@ const generateWeightedData = function(data) {
         let megas = country.pop / 1000000.0;
 
         country.confPerMega = {data: []};
-        for (let i = 0; i < (country.conf.data?country.conf.data.length:0) ; i++)
-            country.confPerMega.data.push(country.conf.data[i]===null ? null : (country.conf.data[i] / megas));
+        let lastConf = undefined;
+        for (let i = 0; i < (country.conf.data?country.conf.data.length:0) ; i++) {
+            let value = country.conf.data[i];
+            if(lastConf!==undefined && value!==null && country.conf.data.length-1>i){
+                value=(lastConf+country.conf.data[i+1])/2;
+                country.conf.data[i]=value;
+            }
+            country.confPerMega.data.push(value === null ? null : (value / megas));
+            lastConf=value;
+        }
+
+        country.confDiff = {data: [null]};
+        for (let i = 1; i < (country.conf.data?country.conf.data.length:0) ; i++)
+            country.confDiff.data.push(country.conf.data[i]===null || country.conf.data[i-1]===null
+                ? null
+                : ((country.conf.data[i]-country.conf.data[i-1])/country.conf.data[i-1]*100));
+        //smooth conf diff data with moving average
+        const smoothedConfDiffData = [null,null];
+        for (let i = 1; i < country.confDiff.data.length-1; i++){
+            const mean = country.confDiff.data[i]===null || country.confDiff.data[i-1]===null || country.confDiff.data[i+1]===null
+                ? null
+                : (country.confDiff.data[i] + country.confDiff.data[i-1] + country.confDiff.data[i+1])/3.0;
+            smoothedConfDiffData.push(mean);
+        }
+        country.confDiff.data=smoothedConfDiffData;
 
         country.deadPerMega = {data: []};
         for (let i = 0; i < (country.dead.data?country.dead.data.length:0) ; i++)
@@ -491,6 +423,23 @@ const generateWeightedData = function(data) {
             const active = conf===null || reco===null || dead===null ? null : conf-(reco+dead);
             country.activePerMega.data.push(active!==null ? (active / megas) : null);
         }
+
+
+        country.activeDiff = {data: [null]};
+        for (let i = 1; i < (country.activePerMega.data?country.activePerMega.data.length:0) ; i++)
+            country.activeDiff.data.push(country.activePerMega.data[i]===null || country.activePerMega.data[i-1]===null
+                ? null
+                : ((country.activePerMega.data[i]-country.activePerMega.data[i-1])/country.activePerMega.data[i-1]*100));
+        //smooth conf diff data with moving average
+        const smoothedActiveDiffData = [null,null];
+        for (let i = 1; i < country.activeDiff.data.length-1; i++){
+            const mean = country.activeDiff.data[i]===null || country.activeDiff.data[i-1]===null || country.activeDiff.data[i+1]===null
+                ? null
+                : (country.activeDiff.data[i] + country.activeDiff.data[i-1] + country.activeDiff.data[i+1])/3.0;
+            smoothedActiveDiffData.push(mean);
+        }
+        country.activeDiff.data=smoothedActiveDiffData;
+
 
         let testDataProblem = false;
         country.confPerTest = {data: []};
@@ -521,8 +470,8 @@ const generateWeightedData = function(data) {
     }
 };
 
-const drawChart = function(elemId,data,countryColors) {
-    const mobile = getHeight()<850;
+const drawChart = function(elemId,data,countryColors,showModelSeries,min,max) {
+    const smallscreen = getHeight()<850;
 
     if(charts[elemId])
         charts[elemId].dispose();
@@ -533,13 +482,17 @@ const drawChart = function(elemId,data,countryColors) {
 
     let categoryAxis = chart.xAxes.push(new am4charts.CategoryAxis());
     categoryAxis.dataFields.category = "day";
-    categoryAxis.fontSize=mobile?10:12;
+    categoryAxis.fontSize=smallscreen?10:12;
     categoryAxis.title.text='days from the 100th confirmed case';
 
     let valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
-    valueAxis.fontSize=mobile?10:12;
+    valueAxis.fontSize=smallscreen?10:12;
+    if(min!==undefined&&min!==null)
+        valueAxis.min=min;
+    if(max!==undefined&&max!==null)
+        valueAxis.max=max;
 
-    if(!mobile) {
+    if(!smallscreen) {
         chart.scrollbarX = new am4core.Scrollbar();
         chart.exporting.menu = new am4core.ExportMenu();
         chart.exporting.menu.align = "left";
@@ -547,6 +500,10 @@ const drawChart = function(elemId,data,countryColors) {
     }
 
     for(let cName in countryColors){
+        const isRealData = cName.indexOf('-')<0;
+        if(!isRealData&&!showModelSeries)
+            continue;
+
         const series = chart.series.push(new am4charts.LineSeries());
         series.dataFields.valueY = cName;
         series.dataFields.categoryX = "day";
@@ -556,7 +513,7 @@ const drawChart = function(elemId,data,countryColors) {
         series.legendSettings.valueText = "{valueY}";
         series.visible = true;
         series.stroke = am4core.color(countryColors[cName]);
-        const isRealData = cName.indexOf('_')<0;
+
         if(!isRealData) {
             series.strokeDasharray = 3;
             series.strokeWidth = 1;
@@ -578,9 +535,10 @@ const drawChart = function(elemId,data,countryColors) {
     chart.data = data;
 
     chart.legend = new am4charts.Legend();
-    chart.legend.fontSize=mobile?8:12;
-    if(!mobile)
-        chart.legend.maxHeight=70;
+    chart.legend.fontSize=smallscreen?8:12;
+    chart.legend.maxHeight=smallscreen?140:70;
+    chart.legend.labels.template.truncate = true;
+    chart.legend.labels.template.wrap = true;
 
     $($('#'+elemId).parents('div.chart-outer')[0]).css('display','block');
 };
@@ -591,7 +549,7 @@ const createCharts = function(data,chartsCodes) {
     for (let cName in data.countryData) {
         let country = data.countryData[cName];
         data.countryColors[cName]=data.countryData[cName].color;
-        confMaxDelta =Math.max(confMaxDelta,country.conf.data?country.conf.data.length-1:0);
+        confMaxDelta=Math.max(confMaxDelta,country.conf.data?country.conf.data.length-1:0);
     }
 
     const generateChartData = function (fromDataName,data,confMaxDelta) {
@@ -612,40 +570,44 @@ const createCharts = function(data,chartsCodes) {
     };
 
     let charts2Show = chartsCodes.length===0
-        ? ['conf','active','dead','dead-per-conf','reco-per-conf','test','test-positive']
+        ? ['conf','conf-diff','active','active-diff','dead','dead-per-conf','reco-per-conf','test','test-positive']
         : chartsCodes;
 
     if(charts2Show.indexOf('conf')>=0)
-        drawChart('conf_chart', generateChartData('confPerMega', data, confMaxDelta), data.countryColors);
+        drawChart('conf_chart', generateChartData('confPerMega', data, confMaxDelta), data.countryColors,true);
+
+    if(charts2Show.indexOf('conf-diff')>=0)
+        drawChart('conf_diff_chart', generateChartData('confDiff', data, confMaxDelta), data.countryColors,false);
 
     if(charts2Show.indexOf('active')>=0) {
-        drawChart('active_chart', generateChartData('activePerMega', data, confMaxDelta), data.countryColors);
+        drawChart('active_chart', generateChartData('activePerMega', data, confMaxDelta), data.countryColors,true);
         $('#active_chart').data('currentdata',data);
     } else $('#active_chart').data('currentdata',undefined);
 
+    if(charts2Show.indexOf('active-diff')>=0) {
+        drawChart('active_diff_chart', generateChartData('activeDiff', data, confMaxDelta), data.countryColors,false,-100,55);
+        $('#active_diff_chart').data('currentdata',data);
+    } else $('#active_diff_chart').data('currentdata',undefined);
+
     if(charts2Show.indexOf('dead')>=0)
-        drawChart('dead_chart', generateChartData('deadPerMega',data, confMaxDelta), data.countryColors);
+        drawChart('dead_chart', generateChartData('deadPerMega',data, confMaxDelta), data.countryColors,true);
 
     if(charts2Show.indexOf('dead-per-conf')>=0)
-        drawChart('dead_per_conf_chart', generateChartData('deadPerConf',data, confMaxDelta), data.countryColors);
+        drawChart('dead_per_conf_chart', generateChartData('deadPerConf',data, confMaxDelta), data.countryColors,false);
 
     if(charts2Show.indexOf('reco-per-conf')>=0)
-        drawChart('reco_per_conf_chart', generateChartData('recoPerConf',data, confMaxDelta), data.countryColors);
+        drawChart('reco_per_conf_chart', generateChartData('recoPerConf',data, confMaxDelta), data.countryColors,false);
 
     if(charts2Show.indexOf('test')>=0)
-        drawChart('test_chart', generateChartData('testPerMega',data, confMaxDelta), data.countryColors);
+        drawChart('test_chart', generateChartData('testPerMega',data, confMaxDelta), data.countryColors,true);
 
     if(charts2Show.indexOf('test-positive')>=0)
-        drawChart('conf_per_test_chart', generateChartData('confPerTest',data, confMaxDelta), data.countryColors);
+        drawChart('conf_per_test_chart', generateChartData('confPerTest',data, confMaxDelta), data.countryColors,false);
 };
 
 const addSimulation2Active = function(data){
     const chart = charts['active_chart'];
     if(chart){
-        const formatDate = function (date) {
-            return date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate();
-        };
-
         const addSeries2Chart = function(){
             let simulMaxDelta = 0;
             for (let cName in data.countryData) {
@@ -674,14 +636,13 @@ const addSimulation2Active = function(data){
             const data4Chart = generateChartData('simulPerMega',data,simulMaxDelta);
 
             for(let cName in data.countryColors){
-                const isRealData = cName.indexOf('_')<0;
+                const isRealData = cName.indexOf('-')<0;
                 if(isRealData) {
                     const series = chart.series.push(new am4charts.LineSeries());
                     series.dataFields.valueY = cName+'_simul';
                     series.dataFields.categoryX = "day";
                     series.name = cName+'_simul';
                     series.strokeWidth = 1;
-                    series.minBulletDistance = 10;
                     series.visible = true;
                     series.stroke = am4core.color(data.countryColors[cName]);
                     series.strokeDasharray = 4;
@@ -711,7 +672,7 @@ const addSimulation2Active = function(data){
             const retrieveSimulDataFromRemi = function(simulDataFromRemi, addSeries2Chart) {
                 const _10DaysFromNow = new Date().plusDays(10);
                 for (let cName in data.countryData) {
-                    const isRealData = cName.indexOf('_') < 0;
+                    const isRealData = cName.indexOf('-') < 0;
                     if (isRealData) {
                         const countryData = data.countryData[cName];
                         countryData.simul = {};
@@ -737,17 +698,17 @@ const addSimulation2Active = function(data){
             };
 
             cache4js.ajaxCache({
-                url:'https://raw.githubusercontent.com/RemiTheWarrior/epidemic-simulator/master/data/'+formatDate(new Date().plusDays(-1))+'.json',
+                url:'https://raw.githubusercontent.com/RemiTheWarrior/epidemic-simulator/master/data/'+formatDate(new Date().plusDays(-1),'-')+'.json',
                 dataType: 'json',
                 success: function (simulDataFromRemi) {
-                    retrieveSimulDataFromRemi(typeof simulDataFromRemi === 'string' ? JSON.parse(simulDataFromRemi) : simulDataFromRemi, addSeries2Chart);
+                    retrieveSimulDataFromRemi((typeof simulDataFromRemi) === 'string' ? JSON.parse(simulDataFromRemi) : simulDataFromRemi, addSeries2Chart);
                 },
                 error: function () {
                     cache4js.ajaxCache({
-                        url:'https://raw.githubusercontent.com/RemiTheWarrior/epidemic-simulator/master/data/'+formatDate(new Date().plusDays(-2))+'.json',
+                        url:'https://raw.githubusercontent.com/RemiTheWarrior/epidemic-simulator/master/data/'+formatDate(new Date().plusDays(-2),'-')+'.json',
                         dataType: 'json',
                         success: function (simulDataFromRemi) {
-                            retrieveSimulDataFromRemi(typeof simulDataFromRemi === 'string' ? JSON.parse(simulDataFromRemi) : simulDataFromRemi, addSeries2Chart);
+                            retrieveSimulDataFromRemi((typeof simulDataFromRemi) === 'string' ? JSON.parse(simulDataFromRemi) : simulDataFromRemi, addSeries2Chart);
                         },
                         error: function () {
                             alert('Could not retrieve data for simulation.')
@@ -758,13 +719,158 @@ const addSimulation2Active = function(data){
         }
     }
 };
-
 const removeSimulationFromActive = function(){
     const chart = charts['active_chart'];
     if(chart){
         let _2rem = [];
         for(let i = 0 ; i < chart.series.length ; i++)
             if(chart.series.values[i].name.indexOf('_simul')>0)
+                _2rem.push(i);
+
+        for(let i = _2rem.length-1 ; i >= 0 ; i--)
+            chart.series.removeIndex(_2rem[i]);
+    }
+};
+
+const addContext2ActiveDiff = function (data) {
+    const chart = charts['active_diff_chart'];
+    if(chart){
+
+        const addSeries2Chart = function(){
+            let contextMaxDelta = 0;
+            for (let cName in data.countryData) {
+                let country = data.countryData[cName];
+                contextMaxDelta = Math.max(contextMaxDelta,country.activeDiffContext&&country.activeDiffContext.data?country.activeDiffContext.data.length-1:0);
+            }
+
+            const generateChartData = function (fromDataName,data,maxDelta) {
+                let res = [];
+                for (let count = 0; count <= maxDelta; count++) {
+                    const elem = {
+                        day: count
+                    };
+                    for (let cName in data.countryData) {
+                        let country = data.countryData[cName];
+                        elem[cName] = country[fromDataName] && count < country[fromDataName].data.length && count<country[fromDataName].data.length
+                            ? country[fromDataName].data[count]
+                            : null;
+                    }
+                    res.push(elem);
+                }
+                return res;
+            };
+
+            const data4Chart = generateChartData('activeDiffContext',data,contextMaxDelta);
+
+            for(let cName in data.countryColors){
+                const isRealData = cName.indexOf('-')<0;
+                if(isRealData) {
+                    const series = chart.series.push(new am4charts.LineSeries());
+                    series.dataFields.valueY = cName+'_mobility';
+                    series.dataFields.categoryX = "day";
+                    series.name = cName+'_mobility';
+                    series.strokeWidth = 1;
+                    series.visible = true;
+                    series.stroke = am4core.color(data.countryColors[cName]);
+                    series.strokeDasharray = 4;
+                }
+            }
+
+            for(let i = 0 ; i < chart.data.length ; i++){
+                const line = data4Chart[i];
+                for(let cName in data.countryColors)
+                    chart.data[i][cName+'_mobility']=line?line[cName]:null;
+            }
+
+        };
+
+        if(data.countryData[Object.keys(data.countryData)[0]].activeDiffContext)
+            addSeries2Chart();
+        else {
+            const retrieveMobilityDataFromCityXDev = function(mobilityDataFromCityXDev, addSeries2Chart) {
+                for (let cName in data.countryData) {
+                    const isRealData = cName.indexOf('-') < 0;
+                    if (isRealData) {
+                        const countryData = data.countryData[cName];
+                        countryData.activeDiffContext = {};
+                        const kinds = ['retail_and_recreation_percent_change_from_baseline','grocery_and_pharmacy_percent_change_from_baseline','parks_percent_change_from_baseline','transit_stations_percent_change_from_baseline','workplaces_percent_change_from_baseline'];
+                        let lastDate = undefined;
+                        for(let e in mobilityDataFromCityXDev[cName].country){
+                            const elem = mobilityDataFromCityXDev[cName].country[e];
+                            const date = new Date(elem.date);
+                            if (date >= countryData.first100ConfDate){
+                                if (!countryData.activeDiffContext.data) {
+                                    countryData.activeDiffContext.data = [];
+                                    countryData.activeDiffContext.firstDate=date;
+                                } else {
+                                    let dateDelta = (lastDate ? daysBetween(lastDate, date) : 0);
+                                    if (dateDelta > 1)
+                                        for (let i = 1; i < dateDelta; i++)
+                                            countryData.activeDiffContext.data.push(null);
+                                }
+
+                                let sum = 0, count=0;
+                                for (let k of kinds) {
+                                    if(elem[k]!==null&&elem[k]!==undefined){
+                                        sum+=elem[k];
+                                        count++;
+                                    }
+                                }
+
+                                const mean = sum/count;
+                                countryData.activeDiffContext.data.push(mean);
+
+                                lastDate = date;
+                            }
+                        }
+                    }
+                }
+                addSeries2Chart();
+            };
+
+
+            const reqs = [];
+            const mobilityDataFromCityXDev = {};
+            for (let country3LetterCode of chosenCountries) {
+                const country = countryForCode(country3LetterCode);
+                const country2LetterCode = country.alpha2Code;
+                reqs.push(cache4js.ajaxCache({
+                    context: {cName: country.name},
+                    url: 'https://raw.githubusercontent.com/cityxdev/covid19GoogleMobilityJSON/master/data/google_mobility_data_'+country2LetterCode+'.json',
+                    success: function(data){
+                        mobilityDataFromCityXDev[this.cName]=(typeof data) === 'string' ? JSON.parse(data) : data;
+                    }
+                },DYNAMIC_DATA_EXPIRE_SECS));
+            }
+            Promise.all(reqs).then(function () {
+                retrieveMobilityDataFromCityXDev(mobilityDataFromCityXDev,addSeries2Chart);
+            }).catch(function (e) {
+                console.log(e);
+                alert('Error getting mobility data.');
+            });
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+};
+const removeContextFromActiveDiff = function () {
+    const chart = charts['active_diff_chart'];
+    if(chart){
+        let _2rem = [];
+        for(let i = 0 ; i < chart.series.length ; i++)
+            if(chart.series.values[i].name.indexOf('_mobility')>0)
                 _2rem.push(i);
 
         for(let i = _2rem.length-1 ; i >= 0 ; i--)
@@ -786,6 +892,7 @@ const reload = function(){
     chosenCountries = [];
     allCountries = [];
     $('input.add-simulation-chk').prop('checked',false);
+    $('input.add-context-chk').prop('checked',false);
     showLoader(true);
     cache4js.ajaxCache({
         url:'https://pkgstore.datahub.io/core/population/population_json/data/43d34c2353cbd16a0aa8cadfb193af05/population_json.json',
@@ -957,6 +1064,14 @@ $(function () {
             addSimulation2Active($('#active_chart').data('currentdata'));
         } else {
             removeSimulationFromActive();
+        }
+    });
+
+    $('#add_context_active_diff').change(function () {
+        if($(this).is(':checked')){
+            addContext2ActiveDiff($('#active_diff_chart').data('currentdata'));
+        } else {
+            removeContextFromActiveDiff();
         }
     });
 
