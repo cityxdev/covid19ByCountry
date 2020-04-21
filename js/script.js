@@ -300,6 +300,7 @@ const generateModelData = function(to) {
         first100ConfDate: new Date('2020-02-15'),
         color: '#FF00FF',
         pop: 5000000,
+        popYear: new Date().getFullYear(),
         conf: {data: [100]},
         dead: {data: [5]},
         reco: {data: [15]},
@@ -314,25 +315,15 @@ const generateModelData = function(to) {
 };
 
 const generateCountryDetails = function(data) {
-    let countryDetailsTBody = $('#country_details_table tbody').empty();
-    let countries = [];
-    for (let c in chosenCountries) {
-        let country = countryForCode(chosenCountries[c]);
-        country.first100ConfDate=data.countryData[country.name].first100ConfDate;
-        countries.push(country);
-    }
-
-    countries.sort(function (a,b) {
-        return localeCompareStrings(a.name,b.name);
-    });
-
-    for (let c in countries) {
-        let country = countries[c];
+    const countryDetailsTBody = $('#country_details_table tbody').empty();
+    for (let cName in data.countryData) {
+        const countryData = data.countryData[cName];
         countryDetailsTBody.append(
             '<tr>' +
-            '<td>' + country.name+ '</td>' +
-            '<td>'+(country.first100ConfDate?formatDate(country.first100ConfDate,'/',true):'--')+'</td>' +
-            '<td>'+country.pop.toLocaleString('en-US')+' (yr: '+country.popYear+')</td>' +
+            '<td class="color"><div style="background-color: '+countryData.color+'" class="legend-elem"></div></td>' +
+            '<td>' + cName+ '</td>' +
+            '<td>'+(countryData.first100ConfDate?formatDate(countryData.first100ConfDate,'/',true):'--')+'</td>' +
+            '<td>'+countryData.pop.toLocaleString('en-US')+' (yr: '+countryData.popYear+')</td>' +
             '</tr>'
         );
     }
@@ -347,6 +338,7 @@ const retrieveData = function(covidDataFromPomber,testingDataFromWikiData,testin
         const name = country.name;
         if(chosenCountries.indexOf(country.code)>=0)
             data.countryData[name]={
+                popYear: country.popYear,
                 pop: country.pop,
                 conf: {},
                 dead: {},
@@ -514,6 +506,12 @@ const drawChart = function(elemId,data,countryColors,showModelSeries,min,max) {
         series.visible = true;
         series.stroke = am4core.color(countryColors[cName]);
 
+        series.tooltipText = '{name}: [bold]{valueY.formatNumber("#,###.0#")}[/]';
+        series.tooltip.getFillFromObject=false;
+        series.tooltip.background.fill= am4core.color(countryColors[cName]);
+        series.tooltip.background.color= am4core.color("#ffffff");
+        series.tooltip.fontSize= smallscreen?8:12;
+
         if(!isRealData) {
             series.strokeDasharray = 3;
             series.strokeWidth = 1;
@@ -539,6 +537,7 @@ const drawChart = function(elemId,data,countryColors,showModelSeries,min,max) {
     chart.legend.maxHeight=smallscreen?140:70;
     chart.legend.labels.template.truncate = true;
     chart.legend.labels.template.wrap = true;
+    chart.legend.valueLabels.template.disabled = true;
 
     $($('#'+elemId).parents('div.chart-outer')[0]).css('display','block');
 };

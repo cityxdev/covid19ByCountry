@@ -108,6 +108,11 @@ label{
     text-align: right;
     padding-right: 80px;
 }
+#country_details_table tbody tr td:not(td:first-child):not(td:last-child),
+#country_details_table thead tr th:not(td:first-child):not(td:last-child){
+    text-align: left !important;
+}
+
 @media only screen and (max-width: 800px) {
     #country_details_table tbody tr td:first-child,
     #country_details_table thead tr th:first-child{
@@ -125,6 +130,18 @@ label{
 #country_details_table thead tr th{
     font-weight: bold;
 }
+#country_details_table thead tr th.color,
+#country_details_table tbody tr td.color{
+    width: 40px;
+    text-align: center;
+}
+#country_details_table tbody tr td.color div.legend-elem{
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 1px solid #FFFFFF;
+    margin: auto;
+}
 
 #country_details_table tbody tr:nth-child(odd){
     background-color: #EAEAEA;
@@ -133,7 +150,7 @@ label{
 #country_details_table tbody tr td{
     padding: 5px 10px;
 }
-#country_details_table thead tr th:not(:last-child){
+#country_details_table thead tr th:not(:last-child):not(:first-child){
     padding-right: 150px;
 }
 #country_details_table thead tr th{
@@ -150,11 +167,27 @@ label{
         margin-right: 5px;
     }
     #country_details_table{
-        font-size: 12px;
+        font-size: 10px;
+        width: 100%;
         margin: 5px auto 5px;
     }
-    #country_details_table thead tr th:not(:last-child){
-        padding-right: 10px;
+    #country_details_table thead tr th, #country_details_table tbody tr td {
+        padding: unset;
+    }
+    #country_details_table thead tr th {
+        padding-top: unset;
+    }
+    #country_details_table thead tr th:not(:last-child):not(:first-child),
+    #country_details_table tbody tr td:not(:last-child):not(:first-child){
+        padding: 5px;
+        text-align: left;
+    }
+    #country_details_table tbody tr td.color div.legend-elem {
+        width: 15px;
+        height: 15px;
+        border-radius: 50%;
+        border: 1px solid #FFFFFF;
+        margin: auto;
     }
 }
 
