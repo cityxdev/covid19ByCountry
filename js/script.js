@@ -464,7 +464,7 @@ const generateWeightedData = function(data) {
 
 const drawChart = function(elemId,data,countryColors,showModelSeries,min,max) {
     $($('#'+elemId).parents('div.chart-outer')[0]).css('display','block');
-    showLoader(true,$($('#'+elemId).parents('div.chart-inner')[0]));
+    jsloader.showLoader(true,$($('#'+elemId).parents('div.chart-inner')[0]));
 
     const smallscreen = getHeight()<850;
 
@@ -542,7 +542,7 @@ const drawChart = function(elemId,data,countryColors,showModelSeries,min,max) {
     chart.legend.labels.template.wrap = true;
     chart.legend.valueLabels.template.disabled = true;
 
-    hideLoader($($('#'+elemId).parents('div.chart-inner')[0]));
+    jsloader.hideLoader($($('#'+elemId).parents('div.chart-inner')[0]));
 
 };
 
@@ -611,7 +611,7 @@ const createCharts = function(data,chartsCodes) {
 const addSimulation2Active = function(data){
     const chart = charts['active_chart'];
     if(chart){
-        showLoader(true,'div.chart-outer.active div.chart-inner');
+        jsloader.showLoader(true,'div.chart-outer.active div.chart-inner');
         const addSeries2Chart = function(){
             let simulMaxDelta = 0;
             for (let cName in data.countryData) {
@@ -670,7 +670,7 @@ const addSimulation2Active = function(data){
             }
 
             chart.invalidateData();
-            hideLoader('div.chart-outer.active div.chart-inner');
+            jsloader.hideLoader('div.chart-outer.active div.chart-inner');
         };
 
         if(data.countryData[Object.keys(data.countryData)[0]].simulPerMega)
@@ -742,7 +742,7 @@ const removeSimulationFromActive = function(){
 const addContext2ActiveDiff = function (data) {
     const chart = charts['active_diff_chart'];
     if(chart){
-        showLoader(true,'div.chart-outer.active-diff div.chart-inner');
+        jsloader.showLoader(true,'div.chart-outer.active-diff div.chart-inner');
         const addSeries2Chart = function(){
             let contextMaxDelta = 0;
             for (let cName in data.countryData) {
@@ -790,7 +790,7 @@ const addContext2ActiveDiff = function (data) {
             }
 
             chart.invalidateData();
-            hideLoader('div.chart-outer.active-diff div.chart-inner');
+            jsloader.hideLoader('div.chart-outer.active-diff div.chart-inner');
         };
 
         if(data.countryData[Object.keys(data.countryData)[0]].activeDiffContext)
@@ -902,7 +902,7 @@ const reload = function(){
     allCountries = [];
     $('input.add-simulation-chk').prop('checked',false);
     $('input.add-context-chk').prop('checked',false);
-    showLoader(true);
+    jsloader.showLoader(true);
     cache4js.ajaxCache({
         url:'https://pkgstore.datahub.io/core/population/population_json/data/43d34c2353cbd16a0aa8cadfb193af05/population_json.json',
         dataType: 'json',
@@ -946,7 +946,7 @@ const reload = function(){
                                         am4core.useTheme(am4themes_material);
 
                                         createCharts(data,chartsCodes);
-                                        hideLoader();
+                                        jsloader.hideLoader();
                                     });
                                 }
                             },DYNAMIC_DATA_EXPIRE_SECS);
@@ -1021,7 +1021,7 @@ const onModalOpen = function() {
 
     $('#choose_countries_modal button.apply-button').click(function () {
         $('#choose_countries_modal button.apply-button').trigger('close');
-        showLoader(true);
+        jsloader.showLoader(true);
 
         let apply = function(){
             let codes = $('#active_countries').data('codes').slice();

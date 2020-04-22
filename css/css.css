@@ -2,13 +2,13 @@ body{
     font-family: 'Muli', sans-serif;
     background-color: #EAEAEA;
     color: #000091;
-    padding: 20px 0;
 }
 
 h1{
     font-size: 30px;
     font-weight: bold;
     text-align: center;
+    padding-top: 20px;
 }
 
 button{
@@ -195,6 +195,7 @@ label{
 #charts{
     margin-left: 5%;
     margin-right: 5%;
+    margin-bottom: 20px;
 }
 
 @media only screen and (max-width: 800px) {
