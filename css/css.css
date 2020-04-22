@@ -450,31 +450,3 @@ body.modal-open {
         line-height: 0.85;
     }
 }
-
-
-
-
-div.loader-container{
-    display: none;
-    z-index: 10000;
-    background: rgba(255,255,255,0.5);
-    position: fixed;
-    height: 100%;
-    width: 100%;
-}
-div.loader {
-    margin: auto;
-    top: calc(50% - 60px);
-    left: calc(50% - 60px);
-    position: absolute;
-    border: 16px solid #FFFFFF;
-    border-top: 16px solid #000091;
-    border-radius: 50%;
-    width: 120px;
-    height: 120px;
-    animation: spin 4s linear infinite;
-}
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}

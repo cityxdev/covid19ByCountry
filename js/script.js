@@ -463,6 +463,9 @@ const generateWeightedData = function(data) {
 };
 
 const drawChart = function(elemId,data,countryColors,showModelSeries,min,max) {
+    $($('#'+elemId).parents('div.chart-outer')[0]).css('display','block');
+    showLoader(true,$($('#'+elemId).parents('div.chart-inner')[0]));
+
     const smallscreen = getHeight()<850;
 
     if(charts[elemId])
@@ -539,7 +542,8 @@ const drawChart = function(elemId,data,countryColors,showModelSeries,min,max) {
     chart.legend.labels.template.wrap = true;
     chart.legend.valueLabels.template.disabled = true;
 
-    $($('#'+elemId).parents('div.chart-outer')[0]).css('display','block');
+    hideLoader($($('#'+elemId).parents('div.chart-inner')[0]));
+
 };
 
 const createCharts = function(data,chartsCodes) {
@@ -607,6 +611,7 @@ const createCharts = function(data,chartsCodes) {
 const addSimulation2Active = function(data){
     const chart = charts['active_chart'];
     if(chart){
+        showLoader(true,'div.chart-outer.active div.chart-inner');
         const addSeries2Chart = function(){
             let simulMaxDelta = 0;
             for (let cName in data.countryData) {
@@ -663,6 +668,9 @@ const addSimulation2Active = function(data){
                     newLine[cName]=null;
                 }
             }
+
+            chart.invalidateData();
+            hideLoader('div.chart-outer.active div.chart-inner');
         };
 
         if(data.countryData[Object.keys(data.countryData)[0]].simulPerMega)
@@ -734,7 +742,7 @@ const removeSimulationFromActive = function(){
 const addContext2ActiveDiff = function (data) {
     const chart = charts['active_diff_chart'];
     if(chart){
-
+        showLoader(true,'div.chart-outer.active-diff div.chart-inner');
         const addSeries2Chart = function(){
             let contextMaxDelta = 0;
             for (let cName in data.countryData) {
@@ -781,6 +789,8 @@ const addContext2ActiveDiff = function (data) {
                     chart.data[i][cName+'_mobility']=line?line[cName]:null;
             }
 
+            chart.invalidateData();
+            hideLoader('div.chart-outer.active-diff div.chart-inner');
         };
 
         if(data.countryData[Object.keys(data.countryData)[0]].activeDiffContext)

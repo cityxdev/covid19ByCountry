@@ -81,29 +81,6 @@ const formatDate = function (date,separator,pad) {
     return date.getFullYear() + separator + (date.getMonth() + 1).pad(pad?2:0) + separator + date.getDate().pad(pad?2:0);
 };
 
-
-const showLoader = function (immediatly) {
-    let loader = $('div.loader-container');
-    if(!immediatly) {
-        if (!loader.data('timeoutId'))
-            loader.data('timeoutId', []);
-        let timeoutId = setTimeout(function () {
-            loader.show();
-        }, 300);
-        loader.data('timeoutId').push(timeoutId);
-    } else loader.show();
-};
-const hideLoader = function () {
-    let loader = $('div.loader-container');
-    loader.hide();
-    let timeoutId = loader.data('timeoutId');
-    if(timeoutId)
-        for (let t in timeoutId)
-            clearTimeout(timeoutId[t]);
-    loader.data('timeoutId', []);
-};
-
-
 const getURLParamValue = function (parameterName) {
     var result = null,
         tmp = [];
