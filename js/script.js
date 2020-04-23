@@ -99,9 +99,11 @@ const retrieveTestingDataFromOWID = function(from, to) {
         return dataSourceCountryName;
     };
 
-    const shouldDiscardCountry = function (dataSourceCountryName) {
+    const shouldDiscardCountryLabel = function (dataSourceCountryName) {
         switch (dataSourceCountryName) {
-            case 'United States - inconsistent units (COVID Tracking Project)':
+            case 'United States - specimens tested (CDC)':
+                return false;
+            case 'Italy - people tested':
                 return true;
             default:
                 return false;
@@ -126,7 +128,7 @@ const retrieveTestingDataFromOWID = function(from, to) {
         let line = testLines[l];
         let values = line.split(',');
         let nameFromServer = values[0];
-        if (shouldDiscardCountry(nameFromServer))
+        if (shouldDiscardCountryLabel(nameFromServer))
             continue;
         let cName = dataSourceCountryName2CountryName(nameFromServer.split(' - ')[0]);
 
@@ -249,47 +251,51 @@ const retrieveDataFromPomber = function(from, to) {
     for (let cName in to.countryData) {
         let countryData = to.countryData[cName];
         let covidDataElem = from[cName];
+        let started = false;
         for (let i = 0; i < covidDataElem.length; i++) {
             let entry = covidDataElem[i];
+            let conf = entry.confirmed;
 
-            const conf = entry.confirmed;
-            if(conf>0&&conf<SERIES_ALIGNMENT_MINIMUM){
-                if(!countryData.intial){
+            if(!started && (conf===null || conf===undefined || conf===0))
+                continue;
+            started=true;
+
+            const isInitial = conf<SERIES_ALIGNMENT_MINIMUM;
+            if(isInitial){
+                if(!countryData.initial){
                     countryData.firstConfDate=new Date(entry.date);
                     countryData.initial = {conf:{},dead:{},reco:{}};
                     countryData.initial.conf.data = [];
                     countryData.initial.dead.data = [];
                     countryData.initial.reco.data = [];
                 }
-                const lastConf = lastNonNullNonUndefinedValue(countryData.initial.conf.data);
-                const lastReco = lastNonNullNonUndefinedValue(countryData.initial.reco.data);
-                const lastDead = lastNonNullNonUndefinedValue(countryData.initial.dead.data);
-
-                const dead = !entry.deaths?null:entry.deaths;
-                const reco = !entry.recovered?null:entry.recovered;
-                countryData.initial.conf.data.push(conf!==null && lastConf!==null && lastConf>conf ? null : conf);
-                countryData.initial.dead.data.push(dead!==null && lastDead!==null && lastDead>dead ? null : dead);
-                countryData.initial.reco.data.push(reco!==null && lastReco!==null && lastReco>reco ? null : reco);
-
-            } else if (conf >= SERIES_ALIGNMENT_MINIMUM) {
-
+            } else {
                 if (!countryData.conf.data) {
                     countryData.first100ConfDate=new Date(entry.date);
                     countryData.conf.data = [];
                     countryData.dead.data = [];
                     countryData.reco.data = [];
                 }
-
-                const lastConf = lastNonNullNonUndefinedValue(countryData.conf.data);
-                const lastReco = lastNonNullNonUndefinedValue(countryData.reco.data);
-                const lastDead = lastNonNullNonUndefinedValue(countryData.dead.data);
-
-                const dead = !entry.deaths?null:entry.deaths;
-                const reco = !entry.recovered?null:entry.recovered;
-                countryData.conf.data.push(conf!==null && lastConf!==null && lastConf>conf ? null : conf);
-                countryData.dead.data.push(dead!==null && lastDead!==null && lastDead>dead ? null : dead);
-                countryData.reco.data.push(reco!==null && lastReco!==null && lastReco>reco ? null : reco);
             }
+            const obj2Add2 = isInitial ? countryData.initial : countryData;
+
+            const lastConf = lastNonNullNonUndefinedValue(obj2Add2.conf.data);
+            const lastReco = lastNonNullNonUndefinedValue(obj2Add2.reco.data);
+            const lastDead = lastNonNullNonUndefinedValue(obj2Add2.dead.data);
+
+            let dead = !entry.deaths?null:entry.deaths;
+            let reco = !entry.recovered?null:entry.recovered;
+            conf = conf===undefined || (conf!==null&&conf!==undefined&&conf)<0 || conf<lastConf ? null : conf;
+            dead = dead===undefined || (dead!==null&&dead!==undefined&&dead)<0 || dead<lastDead ? null : dead;
+            reco = reco===undefined || (reco!==null&&reco!==undefined&&reco)<0 || reco<lastReco ? null : reco;
+            if(conf!==null && (reco===null?0:reco)+(dead===null?0:dead)>conf){
+                reco=null;
+                dead=null;
+            }
+
+            obj2Add2.conf.data.push(conf!==null && lastConf!==null && lastConf>conf ? null : conf);
+            obj2Add2.dead.data.push(dead!==null && lastDead!==null && lastDead>dead ? null : dead);
+            obj2Add2.reco.data.push(reco!==null && lastReco!==null && lastReco>reco ? null : reco);
         }
     }
 };
@@ -371,10 +377,10 @@ const generateWeightedData = function(data) {
         let lastConf = undefined;
         for (let i = 0; i < (country.conf.data?country.conf.data.length:0) ; i++) {
             let value = country.conf.data[i];
-            if(lastConf!==undefined && value!==null && country.conf.data.length-1>i){
-                value=(lastConf+country.conf.data[i+1])/2;
-                country.conf.data[i]=value;
-            }
+            // if(lastConf!==undefined && value!==null && country.conf.data.length-1>i){
+            //     value=(lastConf+country.conf.data[i+1])/2;
+            //     country.conf.data[i]=value;
+            // }
             country.confPerMega.data.push(value === null ? null : (value / megas));
             lastConf=value;
         }
@@ -406,7 +412,6 @@ const generateWeightedData = function(data) {
         for (let i = 0; i < (country.reco.data?country.reco.data.length:0) ; i++)
             country.recoPerConf.data.push(country.reco.data[i]===null || country.conf.data[i]===null ? null : (country.reco.data[i] / country.conf.data[i] * 100));
 
-
         country.activePerMega = {data:[]};
         for (let i = 0; i < (country.conf.data?country.conf.data.length:0) ; i++) {
             const conf = country.conf.data[i];
@@ -415,7 +420,6 @@ const generateWeightedData = function(data) {
             const active = conf===null || reco===null || dead===null ? null : conf-(reco+dead);
             country.activePerMega.data.push(active!==null ? (active / megas) : null);
         }
-
 
         country.activeDiff = {data: [null]};
         for (let i = 1; i < (country.activePerMega.data?country.activePerMega.data.length:0) ; i++)
@@ -431,7 +435,6 @@ const generateWeightedData = function(data) {
             smoothedActiveDiffData.push(mean);
         }
         country.activeDiff.data=smoothedActiveDiffData;
-
 
         let testDataProblem = false;
         country.confPerTest = {data: []};
@@ -462,7 +465,7 @@ const generateWeightedData = function(data) {
     }
 };
 
-const drawChart = function(elemId,data,countryColors,showModelSeries,min,max) {
+const drawChart = function(elemId,data,countryColors,showModelSeries,min,max,showExport) {
     $($('#'+elemId).parents('div.chart-outer')[0]).css('display','block');
     jsloader.showLoader(true,$($('#'+elemId).parents('div.chart-inner')[0]));
 
@@ -487,7 +490,7 @@ const drawChart = function(elemId,data,countryColors,showModelSeries,min,max) {
     if(max!==undefined&&max!==null)
         valueAxis.max=max;
 
-    if(!smallscreen) {
+    if(!smallscreen&&showExport) {
         chart.scrollbarX = new am4core.Scrollbar();
         chart.exporting.menu = new am4core.ExportMenu();
         chart.exporting.menu.align = "left";
@@ -572,40 +575,40 @@ const createCharts = function(data,chartsCodes) {
         return res;
     };
 
-    let charts2Show = chartsCodes.length===0
+    const charts2Show = chartsCodes.length===0
         ? ['conf','conf-diff','active','active-diff','dead','dead-per-conf','reco-per-conf','test','test-positive']
         : chartsCodes;
 
-    if(charts2Show.indexOf('conf')>=0)
-        drawChart('conf_chart', generateChartData('confPerMega', data, confMaxDelta), data.countryColors,true);
-
-    if(charts2Show.indexOf('conf-diff')>=0)
-        drawChart('conf_diff_chart', generateChartData('confDiff', data, confMaxDelta), data.countryColors,false);
-
     if(charts2Show.indexOf('active')>=0) {
-        drawChart('active_chart', generateChartData('activePerMega', data, confMaxDelta), data.countryColors,true);
+        drawChart('active_chart', generateChartData('activePerMega', data, confMaxDelta), data.countryColors,true,null,null,true);
         $('#active_chart').data('currentdata',data);
     } else $('#active_chart').data('currentdata',undefined);
 
     if(charts2Show.indexOf('active-diff')>=0) {
-        drawChart('active_diff_chart', generateChartData('activeDiff', data, confMaxDelta), data.countryColors,false,-100,55);
+        drawChart('active_diff_chart', generateChartData('activeDiff', data, confMaxDelta), data.countryColors,false,-100,55,false);
         $('#active_diff_chart').data('currentdata',data);
     } else $('#active_diff_chart').data('currentdata',undefined);
 
+    if(charts2Show.indexOf('conf')>=0)
+        drawChart('conf_chart', generateChartData('confPerMega', data, confMaxDelta), data.countryColors,true,null,null,true);
+
+    if(charts2Show.indexOf('conf-diff')>=0)
+        drawChart('conf_diff_chart', generateChartData('confDiff', data, confMaxDelta), data.countryColors,false,null,null,false);
+
     if(charts2Show.indexOf('dead')>=0)
-        drawChart('dead_chart', generateChartData('deadPerMega',data, confMaxDelta), data.countryColors,true);
+        drawChart('dead_chart', generateChartData('deadPerMega',data, confMaxDelta), data.countryColors,true,null,null,true);
 
     if(charts2Show.indexOf('dead-per-conf')>=0)
-        drawChart('dead_per_conf_chart', generateChartData('deadPerConf',data, confMaxDelta), data.countryColors,false);
+        drawChart('dead_per_conf_chart', generateChartData('deadPerConf',data, confMaxDelta), data.countryColors,false,null,null,true);
 
     if(charts2Show.indexOf('reco-per-conf')>=0)
-        drawChart('reco_per_conf_chart', generateChartData('recoPerConf',data, confMaxDelta), data.countryColors,false);
+        drawChart('reco_per_conf_chart', generateChartData('recoPerConf',data, confMaxDelta), data.countryColors,false,null,null,true);
 
     if(charts2Show.indexOf('test')>=0)
-        drawChart('test_chart', generateChartData('testPerMega',data, confMaxDelta), data.countryColors,true);
+        drawChart('test_chart', generateChartData('testPerMega',data, confMaxDelta), data.countryColors,true,null,null,true);
 
     if(charts2Show.indexOf('test-positive')>=0)
-        drawChart('conf_per_test_chart', generateChartData('confPerTest',data, confMaxDelta), data.countryColors,false);
+        drawChart('conf_per_test_chart', generateChartData('confPerTest',data, confMaxDelta), data.countryColors,false,null,null,true);
 };
 
 const addSimulation2Active = function(data){
