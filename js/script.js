@@ -252,15 +252,17 @@ const retrieveDataFromPomber = function(from, to) {
         let countryData = to.countryData[cName];
         let covidDataElem = from[cName];
         let started = false;
+        let isInitial = true;
         for (let i = 0; i < covidDataElem.length; i++) {
-            let entry = covidDataElem[i];
-            let conf = entry.confirmed;
+            const entry = covidDataElem[i];
 
-            if(!started && (conf===null || conf===undefined || conf===0))
+            if(!started && (entry.confirmed===null || entry.confirmed===undefined || entry.confirmed===0))
                 continue;
             started=true;
 
-            const isInitial = conf<SERIES_ALIGNMENT_MINIMUM;
+            if(isInitial && entry.confirmed!==null && entry.confirmed!==undefined && entry.confirmed>=SERIES_ALIGNMENT_MINIMUM)
+                isInitial = false;
+
             if(isInitial){
                 if(!countryData.initial){
                     countryData.firstConfDate=new Date(entry.date);
@@ -277,25 +279,24 @@ const retrieveDataFromPomber = function(from, to) {
                     countryData.reco.data = [];
                 }
             }
+
             const obj2Add2 = isInitial ? countryData.initial : countryData;
 
             const lastConf = lastNonNullNonUndefinedValue(obj2Add2.conf.data);
             const lastReco = lastNonNullNonUndefinedValue(obj2Add2.reco.data);
             const lastDead = lastNonNullNonUndefinedValue(obj2Add2.dead.data);
 
-            let dead = !entry.deaths?null:entry.deaths;
-            let reco = !entry.recovered?null:entry.recovered;
-            conf = conf===undefined || (conf!==null&&conf!==undefined&&conf)<0 || conf<lastConf ? null : conf;
-            dead = dead===undefined || (dead!==null&&dead!==undefined&&dead)<0 || dead<lastDead ? null : dead;
-            reco = reco===undefined || (reco!==null&&reco!==undefined&&reco)<0 || reco<lastReco ? null : reco;
+            const conf = entry.confirmed===null || entry.confirmed===undefined || entry.confirmed<0 || (lastConf!==null&&entry.confirmed<lastConf) ? null : entry.confirmed;
+            let dead = entry.deaths===null || entry.deaths===undefined || entry.deaths<0 || (lastDead!==null&&entry.deaths<lastDead) ? null : entry.deaths;
+            let reco = entry.recovered===null || entry.recovered===undefined || entry.recovered<0 || (lastReco!==null&&entry.recovered<lastReco) ? null : entry.recovered;
             if(conf!==null && (reco===null?0:reco)+(dead===null?0:dead)>conf){
                 reco=null;
                 dead=null;
             }
 
-            obj2Add2.conf.data.push(conf!==null && lastConf!==null && lastConf>conf ? null : conf);
-            obj2Add2.dead.data.push(dead!==null && lastDead!==null && lastDead>dead ? null : dead);
-            obj2Add2.reco.data.push(reco!==null && lastReco!==null && lastReco>reco ? null : reco);
+            obj2Add2.conf.data.push(conf);
+            obj2Add2.dead.data.push(dead);
+            obj2Add2.reco.data.push(reco);
         }
     }
 };
@@ -374,15 +375,9 @@ const generateWeightedData = function(data) {
         let megas = country.pop / 1000000.0;
 
         country.confPerMega = {data: []};
-        let lastConf = undefined;
         for (let i = 0; i < (country.conf.data?country.conf.data.length:0) ; i++) {
             let value = country.conf.data[i];
-            // if(lastConf!==undefined && value!==null && country.conf.data.length-1>i){
-            //     value=(lastConf+country.conf.data[i+1])/2;
-            //     country.conf.data[i]=value;
-            // }
             country.confPerMega.data.push(value === null ? null : (value / megas));
-            lastConf=value;
         }
 
         country.confDiff = {data: [null]};
