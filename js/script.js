@@ -526,8 +526,11 @@ const drawChart = function(elemId,data,countryColors,showModelSeries,min,max,sho
             circleBullet.radius = 3.5;
             series.bullets.push(circleBullet);
         }
-        if(!showExport&&isRealData){
+        if(!showBullets&&isRealData){
             series.strokeWidth = 2;
+            const focusFilter = new am4core.FocusFilter();
+            focusFilter.stroke=am4core.color("rgba(255,255,255,0.25)");
+            series.filters.push(focusFilter);
         }
     }
 
@@ -647,10 +650,13 @@ const addSimulation2Active = function(data){
                     series.dataFields.valueY = cName+'_simul';
                     series.dataFields.categoryX = "day";
                     series.name = cName+'_simul';
-                    series.strokeWidth = 1;
+                    series.strokeWidth = 1.5;
                     series.visible = true;
                     series.stroke = am4core.color(data.countryColors[cName]);
                     series.strokeDasharray = 4;
+                    const focusFilter = new am4core.FocusFilter();
+                    focusFilter.stroke=am4core.color("rgba(255,255,255,0.25)");
+                    series.filters.push(focusFilter);
                 }
             }
 
@@ -777,10 +783,13 @@ const addContext2ActiveDiff = function (data) {
                     series.dataFields.valueY = cName+'_mobility';
                     series.dataFields.categoryX = "day";
                     series.name = cName+'_mobility';
-                    series.strokeWidth = 1;
+                    series.strokeWidth = 1.5;
                     series.visible = true;
                     series.stroke = am4core.color(data.countryColors[cName]);
                     series.strokeDasharray = 4;
+                    const focusFilter = new am4core.FocusFilter();
+                    focusFilter.stroke=am4core.color("rgba(255,255,255,0.25)");
+                    series.filters.push(focusFilter);
                 }
             }
 
