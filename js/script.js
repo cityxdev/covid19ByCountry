@@ -460,7 +460,7 @@ const generateWeightedData = function(data) {
     }
 };
 
-const drawChart = function(elemId,data,countryColors,showModelSeries,min,max,showExport) {
+const drawChart = function(elemId,data,countryColors,showModelSeries,min,max,showExport,showBullets) {
     $($('#'+elemId).parents('div.chart-outer')[0]).css('display','block');
     jsloader.showLoader(true,$($('#'+elemId).parents('div.chart-inner')[0]));
 
@@ -518,13 +518,16 @@ const drawChart = function(elemId,data,countryColors,showModelSeries,min,max,sho
             series.strokeWidth = 1;
         }
 
-        if(isRealData) {
+        if(showBullets&&isRealData) {
             const circleBullet = new am4core.Circle();
             circleBullet.fill = am4core.color(countryColors[cName]);
             circleBullet.stroke = am4core.color("#fff");
             circleBullet.strokeWidth = 1;
             circleBullet.radius = 3.5;
             series.bullets.push(circleBullet);
+        }
+        if(!showExport&&isRealData){
+            series.strokeWidth = 2;
         }
     }
 
@@ -575,35 +578,35 @@ const createCharts = function(data,chartsCodes) {
         : chartsCodes;
 
     if(charts2Show.indexOf('active')>=0) {
-        drawChart('active_chart', generateChartData('activePerMega', data, confMaxDelta), data.countryColors,true,null,null,true);
+        drawChart('active_chart', generateChartData('activePerMega', data, confMaxDelta), data.countryColors,true,null,null,true,true);
         $('#active_chart').data('currentdata',data);
     } else $('#active_chart').data('currentdata',undefined);
 
     if(charts2Show.indexOf('active-diff')>=0) {
-        drawChart('active_diff_chart', generateChartData('activeDiff', data, confMaxDelta), data.countryColors,false,-100,55,false);
+        drawChart('active_diff_chart', generateChartData('activeDiff', data, confMaxDelta), data.countryColors,false,null,null,false,false);
         $('#active_diff_chart').data('currentdata',data);
     } else $('#active_diff_chart').data('currentdata',undefined);
 
     if(charts2Show.indexOf('conf')>=0)
-        drawChart('conf_chart', generateChartData('confPerMega', data, confMaxDelta), data.countryColors,true,null,null,true);
+        drawChart('conf_chart', generateChartData('confPerMega', data, confMaxDelta), data.countryColors,true,null,null,true,true);
 
     if(charts2Show.indexOf('conf-diff')>=0)
-        drawChart('conf_diff_chart', generateChartData('confDiff', data, confMaxDelta), data.countryColors,false,null,null,false);
+        drawChart('conf_diff_chart', generateChartData('confDiff', data, confMaxDelta), data.countryColors,false,null,null,false,false);
 
     if(charts2Show.indexOf('dead')>=0)
-        drawChart('dead_chart', generateChartData('deadPerMega',data, confMaxDelta), data.countryColors,true,null,null,true);
+        drawChart('dead_chart', generateChartData('deadPerMega',data, confMaxDelta), data.countryColors,true,null,null,true,true);
 
     if(charts2Show.indexOf('dead-per-conf')>=0)
-        drawChart('dead_per_conf_chart', generateChartData('deadPerConf',data, confMaxDelta), data.countryColors,false,null,null,true);
+        drawChart('dead_per_conf_chart', generateChartData('deadPerConf',data, confMaxDelta), data.countryColors,false,null,null,true,true);
 
     if(charts2Show.indexOf('reco-per-conf')>=0)
-        drawChart('reco_per_conf_chart', generateChartData('recoPerConf',data, confMaxDelta), data.countryColors,false,null,null,true);
+        drawChart('reco_per_conf_chart', generateChartData('recoPerConf',data, confMaxDelta), data.countryColors,false,null,null,true,true);
 
     if(charts2Show.indexOf('test')>=0)
-        drawChart('test_chart', generateChartData('testPerMega',data, confMaxDelta), data.countryColors,true,null,null,true);
+        drawChart('test_chart', generateChartData('testPerMega',data, confMaxDelta), data.countryColors,true,null,null,true,true);
 
     if(charts2Show.indexOf('test-positive')>=0)
-        drawChart('conf_per_test_chart', generateChartData('confPerTest',data, confMaxDelta), data.countryColors,false,null,null,true);
+        drawChart('conf_per_test_chart', generateChartData('confPerTest',data, confMaxDelta), data.countryColors,false,null,null,true,true);
 };
 
 const addSimulation2Active = function(data){

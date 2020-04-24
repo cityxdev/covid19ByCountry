@@ -94,3 +94,7 @@ const getURLParamValue = function (parameterName) {
     return result;
 };
 
+const isFunction = function(functionToCheck) {
+    return functionToCheck && {}.toString.call(functionToCheck) === '[object Function]';
+};
+
