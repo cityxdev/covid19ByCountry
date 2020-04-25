@@ -313,7 +313,7 @@ const generateModelData = function(to) {
         reco: {data: [15]},
         test: {data: [500]}
     };
-    for (let i = 1; i < daysBetween(to.countryData[modelName].first100ConfDate, new Date()); i++) {
+    for (let i = 1; i < daysBetween(to.countryData[modelName].first100ConfDate, new Date().plusDays(-5)); i++) {
         to.countryData[modelName].conf.data.push(to.countryData[modelName].conf.data[i - 1] * 1.1);
         to.countryData[modelName].dead.data.push(to.countryData[modelName].conf.data[i] * 0.05);
         to.countryData[modelName].reco.data.push(to.countryData[modelName].conf.data[i] * 0.15);
@@ -460,7 +460,7 @@ const generateWeightedData = function(data) {
     }
 };
 
-const drawChart = function(elemId,data,countryColors,showModelSeries,min,max,showExport,showBullets) {
+const drawChart = function(elemId,data,countryColors,showModelSeries,min,max,accurateData) {
     $($('#'+elemId).parents('div.chart-outer')[0]).css('display','block');
     jsloader.showLoader(true,$($('#'+elemId).parents('div.chart-inner')[0]));
 
@@ -471,7 +471,8 @@ const drawChart = function(elemId,data,countryColors,showModelSeries,min,max,sho
     const chart = am4core.create(elemId, am4charts.XYChart);
     charts[elemId]=chart;
 
-    chart.numberFormatter.numberFormat = "#,###.##";
+    const numberFormat = accurateData?"#,###.##":"#,###.";
+    chart.numberFormatter.numberFormat = numberFormat;
 
     let categoryAxis = chart.xAxes.push(new am4charts.CategoryAxis());
     categoryAxis.dataFields.category = "day";
@@ -485,8 +486,10 @@ const drawChart = function(elemId,data,countryColors,showModelSeries,min,max,sho
     if(max!==undefined&&max!==null)
         valueAxis.max=max;
 
-    if(!smallscreen&&showExport) {
+    if(!smallscreen)
         chart.scrollbarX = new am4core.Scrollbar();
+
+    if(!smallscreen&&accurateData) {
         chart.exporting.menu = new am4core.ExportMenu();
         chart.exporting.menu.align = "left";
         chart.exporting.menu.verticalAlign = "bottom";
@@ -507,7 +510,7 @@ const drawChart = function(elemId,data,countryColors,showModelSeries,min,max,sho
         series.visible = true;
         series.stroke = am4core.color(countryColors[cName]);
 
-        series.tooltipText = '{name}: [bold]{valueY.formatNumber("#,###.0#")}[/]';
+        series.tooltipText = '{name}: [bold]{valueY.formatNumber('+numberFormat+')}[/]';
         series.tooltip.getFillFromObject=false;
         series.tooltip.background.fill= am4core.color(countryColors[cName]);
         series.tooltip.background.color= am4core.color("#ffffff");
@@ -518,7 +521,7 @@ const drawChart = function(elemId,data,countryColors,showModelSeries,min,max,sho
             series.strokeWidth = 1;
         }
 
-        if(showBullets&&isRealData) {
+        if(accurateData&&isRealData) {
             const circleBullet = new am4core.Circle();
             circleBullet.fill = am4core.color(countryColors[cName]);
             circleBullet.stroke = am4core.color("#fff");
@@ -526,7 +529,7 @@ const drawChart = function(elemId,data,countryColors,showModelSeries,min,max,sho
             circleBullet.radius = 3.5;
             series.bullets.push(circleBullet);
         }
-        if(!showBullets&&isRealData){
+        if(!accurateData&&isRealData){
             series.strokeWidth = 2;
             const focusFilter = new am4core.FocusFilter();
             focusFilter.stroke=am4core.color("rgba(255,255,255,0.25)");
@@ -581,35 +584,35 @@ const createCharts = function(data,chartsCodes) {
         : chartsCodes;
 
     if(charts2Show.indexOf('active')>=0) {
-        drawChart('active_chart', generateChartData('activePerMega', data, confMaxDelta), data.countryColors,true,null,null,true,true);
+        drawChart('active_chart', generateChartData('activePerMega', data, confMaxDelta), data.countryColors,true,null,null,true);
         $('#active_chart').data('currentdata',data);
     } else $('#active_chart').data('currentdata',undefined);
 
     if(charts2Show.indexOf('active-diff')>=0) {
-        drawChart('active_diff_chart', generateChartData('activeDiff', data, confMaxDelta), data.countryColors,false,null,null,false,false);
+        drawChart('active_diff_chart', generateChartData('activeDiff', data, confMaxDelta), data.countryColors,false,null,null,false);
         $('#active_diff_chart').data('currentdata',data);
     } else $('#active_diff_chart').data('currentdata',undefined);
 
     if(charts2Show.indexOf('conf')>=0)
-        drawChart('conf_chart', generateChartData('confPerMega', data, confMaxDelta), data.countryColors,true,null,null,true,true);
+        drawChart('conf_chart', generateChartData('confPerMega', data, confMaxDelta), data.countryColors,true,null,null,true);
 
     if(charts2Show.indexOf('conf-diff')>=0)
-        drawChart('conf_diff_chart', generateChartData('confDiff', data, confMaxDelta), data.countryColors,false,null,null,false,false);
+        drawChart('conf_diff_chart', generateChartData('confDiff', data, confMaxDelta), data.countryColors,false,null,null,false);
 
     if(charts2Show.indexOf('dead')>=0)
-        drawChart('dead_chart', generateChartData('deadPerMega',data, confMaxDelta), data.countryColors,true,null,null,true,true);
+        drawChart('dead_chart', generateChartData('deadPerMega',data, confMaxDelta), data.countryColors,true,null,null,true);
 
     if(charts2Show.indexOf('dead-per-conf')>=0)
-        drawChart('dead_per_conf_chart', generateChartData('deadPerConf',data, confMaxDelta), data.countryColors,false,null,null,true,true);
+        drawChart('dead_per_conf_chart', generateChartData('deadPerConf',data, confMaxDelta), data.countryColors,false,null,null,true);
 
     if(charts2Show.indexOf('reco-per-conf')>=0)
-        drawChart('reco_per_conf_chart', generateChartData('recoPerConf',data, confMaxDelta), data.countryColors,false,null,null,true,true);
+        drawChart('reco_per_conf_chart', generateChartData('recoPerConf',data, confMaxDelta), data.countryColors,false,null,null,true);
 
     if(charts2Show.indexOf('test')>=0)
-        drawChart('test_chart', generateChartData('testPerMega',data, confMaxDelta), data.countryColors,true,null,null,true,true);
+        drawChart('test_chart', generateChartData('testPerMega',data, confMaxDelta), data.countryColors,true,null,null,true);
 
     if(charts2Show.indexOf('test-positive')>=0)
-        drawChart('conf_per_test_chart', generateChartData('confPerTest',data, confMaxDelta), data.countryColors,false,null,null,true,true);
+        drawChart('conf_per_test_chart', generateChartData('confPerTest',data, confMaxDelta), data.countryColors,false,null,null,true);
 };
 
 const addSimulation2Active = function(data){
