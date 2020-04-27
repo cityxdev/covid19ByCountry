@@ -310,13 +310,13 @@ const generateModelData = function(to) {
         popYear: new Date().getFullYear(),
         conf: {data: [100]},
         dead: {data: [5]},
-        reco: {data: [15]},
+        reco: {data: [35]},
         test: {data: [500]}
     };
     for (let i = 1; i < daysBetween(to.countryData[modelName].first100ConfDate, new Date().plusDays(-5)); i++) {
         to.countryData[modelName].conf.data.push(to.countryData[modelName].conf.data[i - 1] * 1.1);
         to.countryData[modelName].dead.data.push(to.countryData[modelName].conf.data[i] * 0.05);
-        to.countryData[modelName].reco.data.push(to.countryData[modelName].conf.data[i] * 0.15);
+        to.countryData[modelName].reco.data.push(to.countryData[modelName].conf.data[i] * 0.35);
         to.countryData[modelName].test.data.push(to.countryData[modelName].test.data[i - 1] * 1.10);
     }
 };
@@ -530,11 +530,14 @@ const drawChart = function(elemId,data,countryColors,showModelSeries,min,max,acc
             series.bullets.push(circleBullet);
         }
         if(!accurateData&&isRealData){
-            series.strokeWidth = 2;
+            series.strokeWidth = 1.5;
             const focusFilter = new am4core.FocusFilter();
-            focusFilter.stroke=am4core.color("rgba(255,255,255,0.25)");
+            focusFilter.stroke=am4core.color("rgba(255,255,255,0.1)");
             series.filters.push(focusFilter);
         }
+
+        if(!isRealData)
+            series.hidden=true;
     }
 
     chart.responsive.enabled = true;
