@@ -858,7 +858,7 @@ const addContext2ActiveDiff = function (data) {
                 const country2LetterCode = country.alpha2Code;
                 reqs.push(cache4js.ajaxCache({
                     context: {cName: country.name},
-                    url: 'https://raw.githubusercontent.com/cityxdev/covid19GoogleMobilityJSON/master/data/google_mobility_data_'+country2LetterCode+'.json',
+                    url: 'https://cityxdev.github.io/covid19GoogleMobilityJSON/data/google_mobility_data_'+country2LetterCode+'.json',
                     success: function(data){
                         mobilityDataFromCityXDev[this.cName]=(typeof data) === 'string' ? JSON.parse(data) : data;
                     }
