@@ -66,6 +66,14 @@ const lastNonNullNonUndefinedValue = function (arr) {
             return arr[i];
     return null;
 };
+const lastNonNullNonUndefinedValueIndex = function (arr) {
+    if(!arr)
+        return null;
+    for(let i = arr.length-1 ; i>=0 ; i--)
+        if(arr[i]!==null && arr[i]!==undefined)
+            return i;
+    return null;
+};
 
 
 const daysBetween = function (firstDate, secondDate) {
@@ -79,6 +87,12 @@ Date.prototype.plusDays = function(days) {
 };
 const formatDate = function (date,separator,pad) {
     return date.getFullYear() + separator + (date.getMonth() + 1).pad(pad?2:0) + separator + date.getDate().pad(pad?2:0);
+};
+const maxDates = function (a, b) {
+    return Math.max(a,b)===a?a:b;
+};
+const minDates = function (a, b) {
+    return Math.min(a,b)===a?a:b;
 };
 
 const getURLParamValue = function (parameterName) {

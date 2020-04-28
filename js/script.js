@@ -329,7 +329,7 @@ const generateCountryDetails = function(data) {
             '<tr>' +
             '<td class="color"><div style="background-color: '+countryData.color+'" class="legend-elem"></div></td>' +
             '<td>' + cName+ '</td>' +
-            '<td>'+(countryData.first100ConfDate?formatDate(countryData.first100ConfDate,'/',true):'--')+'</td>' +
+            '<td>'+(countryData.first100ConfDate?formatDate(countryData.first100ConfDate,'/',true):'--')+'<br/>'+(countryData.lastValueDate?formatDate(countryData.lastValueDate,'/',true):'--')+'</td>' +
             '<td>'+countryData.pop.toLocaleString('en-US')+' (yr: '+countryData.popYear+')</td>' +
             '</tr>'
         );
@@ -364,8 +364,6 @@ const retrieveData = function(covidDataFromPomber,testingDataFromWikiData,testin
 
     generateModelData(data);
 
-    generateCountryDetails(data);
-
     return data;
 };
 
@@ -373,6 +371,8 @@ const generateWeightedData = function(data) {
     for (let cName in data.countryData) {
         let country = data.countryData[cName];
         let megas = country.pop / 1000000.0;
+
+        country.lastValueDate = country.first100ConfDate.plusDays(lastNonNullNonUndefinedValueIndex(country.conf.data));
 
         country.confPerMega = {data: []};
         for (let i = 0; i < (country.conf.data?country.conf.data.length:0) ; i++) {
@@ -955,6 +955,7 @@ const reload = function(){
 
                                     let data = retrieveData(covidDataFromPomber, testingDataFromWikiData, testingDataFromOWID);
                                     generateWeightedData(data);
+                                    generateCountryDetails(data);
 
                                     am4core.ready(function () {
                                         am4core.options.queue = true;
