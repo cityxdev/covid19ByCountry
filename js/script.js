@@ -370,93 +370,94 @@ const retrieveData = function(covidDataFromPomber,testingDataFromWikiData,testin
 const generateWeightedData = function(data) {
     for (let cName in data.countryData) {
         let country = data.countryData[cName];
-        let megas = country.pop / 1000000.0;
+        if(country.first100ConfDate) {
+            let megas = country.pop / 1000000.0;
 
-        country.lastValueDate = country.first100ConfDate.plusDays(lastNonNullNonUndefinedValueIndex(country.conf.data));
+            country.lastValueDate = country.first100ConfDate.plusDays(lastNonNullNonUndefinedValueIndex(country.conf.data));
 
-        country.confPerMega = {data: []};
-        for (let i = 0; i < (country.conf.data?country.conf.data.length:0) ; i++) {
-            let value = country.conf.data[i];
-            country.confPerMega.data.push(value === null ? null : (value / megas));
-        }
+            country.confPerMega = {data: []};
+            for (let i = 0; i < (country.conf.data ? country.conf.data.length : 0); i++) {
+                let value = country.conf.data[i];
+                country.confPerMega.data.push(value === null ? null : (value / megas));
+            }
 
-        country.confDiff = {data: [null]};
-        for (let i = 1; i < (country.conf.data?country.conf.data.length:0) ; i++)
-            country.confDiff.data.push(country.conf.data[i]===null || country.conf.data[i-1]===null
-                ? null
-                : ((country.conf.data[i]-country.conf.data[i-1])/country.conf.data[i-1]*100));
-        //smooth conf diff data with moving average
-        const smoothedConfDiffData = [null,null];
-        for (let i = 1; i < country.confDiff.data.length-1; i++){
-            const mean = country.confDiff.data[i]===null || country.confDiff.data[i-1]===null || country.confDiff.data[i+1]===null
-                ? null
-                : (country.confDiff.data[i] + country.confDiff.data[i-1] + country.confDiff.data[i+1])/3.0;
-            smoothedConfDiffData.push(mean);
-        }
-        country.confDiff.data=smoothedConfDiffData;
+            country.confDiff = {data: [null]};
+            for (let i = 1; i < (country.conf.data ? country.conf.data.length : 0); i++)
+                country.confDiff.data.push(country.conf.data[i] === null || country.conf.data[i - 1] === null
+                    ? null
+                    : ((country.conf.data[i] - country.conf.data[i - 1]) / country.conf.data[i - 1] * 100));
+            //smooth conf diff data with moving average
+            const smoothedConfDiffData = [null, null];
+            for (let i = 1; i < country.confDiff.data.length - 1; i++) {
+                const mean = country.confDiff.data[i] === null || country.confDiff.data[i - 1] === null || country.confDiff.data[i + 1] === null
+                    ? null
+                    : (country.confDiff.data[i] + country.confDiff.data[i - 1] + country.confDiff.data[i + 1]) / 3.0;
+                smoothedConfDiffData.push(mean);
+            }
+            country.confDiff.data = smoothedConfDiffData;
 
-        country.deadPerMega = {data: []};
-        for (let i = 0; i < (country.dead.data?country.dead.data.length:0) ; i++)
-            country.deadPerMega.data.push(country.dead.data[i]===null ? null : (country.dead.data[i] / megas));
+            country.deadPerMega = {data: []};
+            for (let i = 0; i < (country.dead.data ? country.dead.data.length : 0); i++)
+                country.deadPerMega.data.push(country.dead.data[i] === null ? null : (country.dead.data[i] / megas));
 
-        country.deadPerConf = {data: []};
-        for (let i = 0; i < (country.dead.data?country.dead.data.length:0) ; i++)
-            country.deadPerConf.data.push(country.dead.data[i]===null || country.conf.data[i]===null ? null : (country.dead.data[i] / country.conf.data[i] * 100));
+            country.deadPerConf = {data: []};
+            for (let i = 0; i < (country.dead.data ? country.dead.data.length : 0); i++)
+                country.deadPerConf.data.push(country.dead.data[i] === null || country.conf.data[i] === null ? null : (country.dead.data[i] / country.conf.data[i] * 100));
 
-        country.recoPerConf = {data: []};
-        for (let i = 0; i < (country.reco.data?country.reco.data.length:0) ; i++)
-            country.recoPerConf.data.push(country.reco.data[i]===null || country.conf.data[i]===null ? null : (country.reco.data[i] / country.conf.data[i] * 100));
+            country.recoPerConf = {data: []};
+            for (let i = 0; i < (country.reco.data ? country.reco.data.length : 0); i++)
+                country.recoPerConf.data.push(country.reco.data[i] === null || country.conf.data[i] === null ? null : (country.reco.data[i] / country.conf.data[i] * 100));
 
-        country.activePerMega = {data:[]};
-        for (let i = 0; i < (country.conf.data?country.conf.data.length:0) ; i++) {
-            const conf = country.conf.data[i];
-            const reco = country.reco.data && country.reco.data.length>i ? country.reco.data[i] : null;
-            const dead = country.dead.data && country.dead.data.length>i ? country.dead.data[i] : null;
-            const active = conf===null || reco===null || dead===null ? null : conf-(reco+dead);
-            country.activePerMega.data.push(active!==null ? (active / megas) : null);
-        }
+            country.activePerMega = {data: []};
+            for (let i = 0; i < (country.conf.data ? country.conf.data.length : 0); i++) {
+                const conf = country.conf.data[i];
+                const reco = country.reco.data && country.reco.data.length > i ? country.reco.data[i] : null;
+                const dead = country.dead.data && country.dead.data.length > i ? country.dead.data[i] : null;
+                const active = conf === null || reco === null || dead === null ? null : conf - (reco + dead);
+                country.activePerMega.data.push(active !== null ? (active / megas) : null);
+            }
 
-        country.activeDiff = {data: [null]};
-        for (let i = 1; i < (country.activePerMega.data?country.activePerMega.data.length:0) ; i++)
-            country.activeDiff.data.push(country.activePerMega.data[i]===null || country.activePerMega.data[i-1]===null
-                ? null
-                : ((country.activePerMega.data[i]-country.activePerMega.data[i-1])/country.activePerMega.data[i-1]*100));
-        //smooth conf diff data with moving average
-        const smoothedActiveDiffData = [null,null];
-        for (let i = 1; i < country.activeDiff.data.length-1; i++){
-            const mean = country.activeDiff.data[i]===null || country.activeDiff.data[i-1]===null || country.activeDiff.data[i+1]===null
-                ? null
-                : (country.activeDiff.data[i] + country.activeDiff.data[i-1] + country.activeDiff.data[i+1])/3.0;
-            smoothedActiveDiffData.push(mean);
-        }
-        country.activeDiff.data=smoothedActiveDiffData;
+            country.activeDiff = {data: [null]};
+            for (let i = 1; i < (country.activePerMega.data ? country.activePerMega.data.length : 0); i++)
+                country.activeDiff.data.push(country.activePerMega.data[i] === null || country.activePerMega.data[i - 1] === null
+                    ? null
+                    : ((country.activePerMega.data[i] - country.activePerMega.data[i - 1]) / country.activePerMega.data[i - 1] * 100));
+            //smooth conf diff data with moving average
+            const smoothedActiveDiffData = [null, null];
+            for (let i = 1; i < country.activeDiff.data.length - 1; i++) {
+                const mean = country.activeDiff.data[i] === null || country.activeDiff.data[i - 1] === null || country.activeDiff.data[i + 1] === null
+                    ? null
+                    : (country.activeDiff.data[i] + country.activeDiff.data[i - 1] + country.activeDiff.data[i + 1]) / 3.0;
+                smoothedActiveDiffData.push(mean);
+            }
+            country.activeDiff.data = smoothedActiveDiffData;
 
-        let testDataProblem = false;
-        country.confPerTest = {data: []};
-        for (let i = 0; i < (country.test.data?country.test.data.length:0) ; i++) {
-            if(!country.conf.data||country.conf.data.length<i+1)
-                break;
-            const tests = country.test.data[i];
-            const confs = country.conf.data[i];
-            if(confs===null||tests===null)
-                country.confPerTest.data.push(null);
-            else if(confs/tests>0.99) {//confirmed cases cannot be more than 99% of tests
-                testDataProblem=true;
-                break;
-            } else country.confPerTest.data.push(confs/tests*100);
-        }
-        if(testDataProblem) {
+            let testDataProblem = false;
             country.confPerTest = {data: []};
-            country.testPerMega = {data: []};
-            console.log('Problem on testing data for country "'+cName+'"');
-        } else {
-            country.testPerMega = {data: []};
-            for (let i = 0; i < (country.test.data?country.test.data.length:0) ; i++) {
-                const absValue = country.test.data[i];
-                country.testPerMega.data.push(absValue===null||absValue===undefined ? null : absValue/megas);
+            for (let i = 0; i < (country.test.data ? country.test.data.length : 0); i++) {
+                if (!country.conf.data || country.conf.data.length < i + 1)
+                    break;
+                const tests = country.test.data[i];
+                const confs = country.conf.data[i];
+                if (confs === null || tests === null)
+                    country.confPerTest.data.push(null);
+                else if (confs / tests > 0.99) {//confirmed cases cannot be more than 99% of tests
+                    testDataProblem = true;
+                    break;
+                } else country.confPerTest.data.push(confs / tests * 100);
+            }
+            if (testDataProblem) {
+                country.confPerTest = {data: []};
+                country.testPerMega = {data: []};
+                console.log('Problem on testing data for country "' + cName + '"');
+            } else {
+                country.testPerMega = {data: []};
+                for (let i = 0; i < (country.test.data ? country.test.data.length : 0); i++) {
+                    const absValue = country.test.data[i];
+                    country.testPerMega.data.push(absValue === null || absValue === undefined ? null : absValue / megas);
+                }
             }
         }
-
     }
 };
 
