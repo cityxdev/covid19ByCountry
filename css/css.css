@@ -27,7 +27,9 @@ button.inverse{
     background-color: #EAEAEA;
     color: #000091;
     border: 2px solid #000091;
-
+}
+#random_countries_button{
+    border: 3px solid #c90005;
 }
 
 .add-context-container, .add-simul-container{

@@ -1072,6 +1072,22 @@ $(function () {
         onModalOpen();
     });
 
+    $('#random_countries_button').click(function () {
+        const indexes = [];
+        while (indexes.length < 5) {
+            const nextIndex = Math.floor((Math.random()*allCountries.length)+1)-1;
+            if(indexes.indexOf(nextIndex)<0)
+                indexes.push(nextIndex);
+        }
+
+        chosenCountries = [];
+        for(let i = 0 ; i < indexes.length ; i++)
+            chosenCountries.push(allCountries[indexes[i]].code);
+        cache4js.storeCache(COUNTRY_CODES_CACHE_KEY,chosenCountries);
+
+        reload();
+    });
+
     $('#share_button').click(function () {
         prompt('Copy and share this URL', 'https://cityxdev.github.io/covid19ByCountry/?countries=' + btoa(JSON.stringify(chosenCountries)));
     });
