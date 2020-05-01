@@ -31,6 +31,11 @@ button.inverse{
 #random_countries_button{
     border: 3px solid #c90005;
 }
+@media only screen and (max-width: 568px) {
+    button:not(:last-child) {
+        margin-bottom: 15px;
+    }
+}
 
 .add-context-container, .add-simul-container{
     margin-top: 15px;
