@@ -915,11 +915,11 @@ const makeSPARQLQuery = function( endpointUrl, sparqlQuery, successCallback ) {
 };
 
 const reload = function(){
+    jsloader.showLoader(true);
     chosenCountries = [];
     allCountries = [];
     $('input.add-simulation-chk').prop('checked',false);
     $('input.add-context-chk').prop('checked',false);
-    jsloader.showLoader(true);
     cache4js.ajaxCache({
         url:'https://pkgstore.datahub.io/core/population/population_json/data/43d34c2353cbd16a0aa8cadfb193af05/population_json.json',
         dataType: 'json',
@@ -1073,6 +1073,7 @@ $(function () {
     });
 
     $('#random_countries_button').click(function () {
+        jsloader.showLoader(true);
         const indexes = [];
         while (indexes.length < 5) {
             const nextIndex = Math.floor((Math.random()*allCountries.length)+1)-1;
