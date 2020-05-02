@@ -639,7 +639,7 @@ const addSimulation2Active = function(data){
                     };
                     for (let cName in data.countryData) {
                         let country = data.countryData[cName];
-                        elem[cName] = country[fromDataName] && count < country[fromDataName].data.length && count<country.activePerMega.data.length+5
+                        elem[cName] = country[fromDataName] && country[fromDataName].data && count < country[fromDataName].data.length && count<country.activePerMega.data.length+5
                             ? country[fromDataName].data[count]
                             : null;
                     }
@@ -698,21 +698,23 @@ const addSimulation2Active = function(data){
                         const countryData = data.countryData[cName];
                         countryData.simul = {};
                         const simulDataElem = simulDataFromRemi[cName];
-                        const first100ConfDate = countryData.first100ConfDate;
-                        for (let i = 1; i < simulDataElem.length; i+=2) {
-                            const entry = simulDataElem[i];
-                            const date = new Date(entry.date);
-                            if (date >= first100ConfDate && date<= _10DaysFromNow) {
-                                if (!countryData.simul.data)
-                                    countryData.simul.data = [];
-                                countryData.simul.data.push(entry["cases_sim"]);
+                        if(simulDataElem){
+                            const first100ConfDate = countryData.first100ConfDate;
+                            for (let i = 1; i < simulDataElem.length; i+=2) {
+                                const entry = simulDataElem[i];
+                                const date = new Date(entry.date);
+                                if (date >= first100ConfDate && date<= _10DaysFromNow) {
+                                    if (!countryData.simul.data)
+                                        countryData.simul.data = [];
+                                    countryData.simul.data.push(entry["cases_sim"]);
+                                }
                             }
-                        }
 
-                        const megas = countryData.pop / 1000000.0;
-                        countryData.simulPerMega = {data: []};
-                        for (let i = 0; i < (countryData.simul.data ? countryData.simul.data.length : 0); i++)
-                            countryData.simulPerMega.data.push(countryData.simul.data[i] / megas);
+                            const megas = countryData.pop / 1000000.0;
+                            countryData.simulPerMega = {data: []};
+                            for (let i = 0; i < (countryData.simul.data ? countryData.simul.data.length : 0); i++)
+                                countryData.simulPerMega.data.push(countryData.simul.data[i] / megas);
+                        }
                     }
                 }
                 addSeries2Chart();
@@ -772,7 +774,7 @@ const addContext2ActiveDiff = function (data) {
                     };
                     for (let cName in data.countryData) {
                         let country = data.countryData[cName];
-                        elem[cName] = country[fromDataName] && count < country[fromDataName].data.length && count<country[fromDataName].data.length
+                        elem[cName] = country[fromDataName] && country[fromDataName].data && count<country[fromDataName].data.length
                             ? country[fromDataName].data[count]
                             : null;
                     }
@@ -816,7 +818,7 @@ const addContext2ActiveDiff = function (data) {
             const retrieveMobilityDataFromCityXDev = function(mobilityDataFromCityXDev, addSeries2Chart) {
                 for (let cName in data.countryData) {
                     const isRealData = cName.indexOf('-') < 0;
-                    if (isRealData) {
+                    if (isRealData && mobilityDataFromCityXDev[cName]!==undefined && mobilityDataFromCityXDev[cName]!==null) {
                         const countryData = data.countryData[cName];
                         countryData.activeDiffContext = {};
                         const kinds = ['retail_and_recreation_percent_change_from_baseline','grocery_and_pharmacy_percent_change_from_baseline','parks_percent_change_from_baseline','transit_stations_percent_change_from_baseline','workplaces_percent_change_from_baseline'];
@@ -865,6 +867,9 @@ const addContext2ActiveDiff = function (data) {
                     url: 'https://cityxdev.github.io/covid19GoogleMobilityJSON/data/google_mobility_data_'+country2LetterCode+'.json',
                     success: function(data){
                         mobilityDataFromCityXDev[this.cName]=(typeof data) === 'string' ? JSON.parse(data) : data;
+                    },
+                    error:function () {
+                        alert('Error getting mobility data for '+this.cName+'.');
                     }
                 },DYNAMIC_DATA_EXPIRE_SECS));
             }
@@ -872,24 +877,10 @@ const addContext2ActiveDiff = function (data) {
                 retrieveMobilityDataFromCityXDev(mobilityDataFromCityXDev,addSeries2Chart);
             }).catch(function (e) {
                 console.log(e);
-                alert('Error getting mobility data.');
+                retrieveMobilityDataFromCityXDev(mobilityDataFromCityXDev,addSeries2Chart);
             });
         }
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 };
 const removeContextFromActiveDiff = function () {
     const chart = charts['active_diff_chart'];
