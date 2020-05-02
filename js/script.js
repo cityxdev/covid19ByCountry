@@ -319,6 +319,8 @@ const generateModelData = function(to) {
         to.countryData[modelName].reco.data.push(to.countryData[modelName].conf.data[i] * 0.35);
         to.countryData[modelName].test.data.push(to.countryData[modelName].test.data[i - 1] * 1.10);
     }
+
+    to.countryData[modelName].lastValueDate = to.countryData[modelName].first100ConfDate.plusDays(lastNonNullNonUndefinedValueIndex(to.countryData[modelName].conf.data));
 };
 
 const generateCountryDetails = function(data) {
@@ -359,6 +361,13 @@ const retrieveData = function(covidDataFromPomber,testingDataFromWikiData,testin
 
     retrieveDataFromPomber(covidDataFromPomber, data);
 
+    for (let cName in data.countryData) {
+        let country = data.countryData[cName];
+        if (country.first100ConfDate) {
+            country.lastValueDate = country.first100ConfDate.plusDays(lastNonNullNonUndefinedValueIndex(country.conf.data));
+        }
+    }
+
     retrieveTestingDateFromWikiData(testingDataFromWikiData, data);
     retrieveTestingDataFromOWID(testingDataFromOWID, data);
 
@@ -372,8 +381,6 @@ const generateWeightedData = function(data) {
         let country = data.countryData[cName];
         if(country.first100ConfDate) {
             let megas = country.pop / 1000000.0;
-
-            country.lastValueDate = country.first100ConfDate.plusDays(lastNonNullNonUndefinedValueIndex(country.conf.data));
 
             country.confPerMega = {data: []};
             for (let i = 0; i < (country.conf.data ? country.conf.data.length : 0); i++) {
@@ -935,26 +942,24 @@ const reload = function(){
                             cache4js.ajaxCache({
                                 url: 'https://raw.githubusercontent.com/owid/covid-19-data/master/public/data/testing/covid-testing-all-observations.csv',
                                 success: function (testingDataFromOWID) {
-
-                                    let chartsCodes=[];
-                                    const chartCodesParam = getURLParamValue("chartCodes");
-                                    if(chartCodesParam)
-                                        chartsCodes = JSON.parse(atob(chartCodesParam));
-
                                     loadCountries(countryDataFromServer, covidDataFromPomber);
-
                                     loadChosenCountries();
 
                                     let data = retrieveData(covidDataFromPomber, testingDataFromWikiData, testingDataFromOWID);
-                                    generateWeightedData(data);
                                     generateCountryDetails(data);
+                                    generateWeightedData(data);
 
                                     am4core.ready(function () {
                                         am4core.options.queue = true;
                                         am4core.options.onlyShowOnViewport = true;
                                         am4core.useTheme(am4themes_material);
 
+                                        let chartsCodes=[];
+                                        const chartCodesParam = getURLParamValue("chartCodes");
+                                        if(chartCodesParam)
+                                            chartsCodes = JSON.parse(atob(chartCodesParam));
                                         createCharts(data,chartsCodes);
+
                                         jsloader.hideLoader();
                                     });
                                 }
