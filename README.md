@@ -6,7 +6,8 @@ A small dashboard providing country comparison on COVID-19 data weighted by popu
 - COVID-19 data: [Pomber](https://github.com/pomber/covid19)
 - Testing data: [Wikidata](https://www.wikidata.org/wiki/Q86901049) and [Our World in Data](https://github.com/owid/covid-19-data)
 - Simulation data: [epidemic-simulator](https://github.com/RemiTheWarrior/epidemic-simulator)
-- Population data: [DataHub.io](https://datahub.io/core/population)
+- Google Mobility data: [CityXDev](https://github.com/cityxdev/covid19GoogleMobilityJSON)
+- Population data: [lukes](https://github.com/lukes/ISO-3166-Countries-with-Regional-Codes) and [DataHub.io](https://datahub.io/core/population)
 
 <br/>
 <br/>
