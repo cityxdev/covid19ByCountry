@@ -100,11 +100,12 @@ const retrieveTestingDataFromOWID = function(from, to) {
     };
 
     const shouldDiscardCountryLabel = function (dataSourceCountryName) {
+        const split = dataSourceCountryName.split(' - ');
+        if(split.length===2 && split[1]==='people tested')
+            return true;
         switch (dataSourceCountryName) {
             case 'United States - specimens tested (CDC)':
                 return false;
-            case 'Italy - people tested':
-                return true;
             default:
                 return false;
         }
@@ -112,8 +113,7 @@ const retrieveTestingDataFromOWID = function(from, to) {
 
     const getValueIndexForCountryName = function(cName){
         switch (cName) {
-            case 'Japan': return 6;
-            default: return 5;
+            default: return 6;
         }
     };
 
@@ -142,7 +142,7 @@ const retrieveTestingDataFromOWID = function(from, to) {
                 lastDate = undefined;
             }
             try {
-                let date = new Date(values[1]);
+                let date = new Date(values[2]);
 
                 if (date < countryData.first100ConfDate)
                     continue;
@@ -188,6 +188,12 @@ const retrieveTestingDateFromWikiData = function(from, to){
     const shouldDiscardCountry = function (dataSourceCountryName) {
         switch (dataSourceCountryName) {
             case 'Italy':
+                return true;
+            case 'Israel':
+                return true;
+            case 'Germany':
+                return true;
+            case 'United Kingdom':
                 return true;
             default:
                 return false;
