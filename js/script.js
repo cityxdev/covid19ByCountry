@@ -118,9 +118,11 @@ const retrieveTestingDataFromOWID = function(from, to) {
     };
 
     let existent = [];
-    for (let cName in to.countryData)
-        if(to.countryData[cName].test.data)
+    for (let cName in to.countryData) {
+        if (lastNonNullNonUndefinedValue(to.countryData[cName].test.data) !== null)
             existent.push(cName);
+        else to.countryData[cName].test.data=undefined;
+    }
 
     let testLines = from.split('\n');
     let lastDate = undefined, lastCountry = undefined;
@@ -186,18 +188,26 @@ const retrieveTestingDataFromOWID = function(from, to) {
 
 const retrieveTestingDateFromWikiData = function(from, to){
     const shouldDiscardCountry = function (dataSourceCountryName) {
-        switch (dataSourceCountryName) {
-            case 'Italy':
-                return true;
-            case 'Israel':
-                return true;
-            case 'Germany':
-                return true;
-            case 'United Kingdom':
-                return true;
-            default:
-                return false;
-        }
+        const _2Discard = [
+            'Italy',
+            'Israel',
+            'Germany',
+            'United Kingdom',
+            'Bulgaria',
+            'Belgium',
+            'Greece',
+            'Switzerland',
+            'Ireland',
+            'Panama',
+            'Costa Rica',
+            'Finland',
+            'Belarus',
+            'Latvia',
+            'India',
+            'Chile',
+            'Ukraine',
+        ];
+        return _2Discard.indexOf(dataSourceCountryName)>=0;
     };
 
     const dataSourceCountryName2CountryName = function (dataSourceCountryName) {
