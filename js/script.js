@@ -206,6 +206,8 @@ const retrieveTestingDateFromWikiData = function(from, to){
             'India',
             'Chile',
             'Ukraine',
+            'France',
+            'Canada',
         ];
         return _2Discard.indexOf(dataSourceCountryName)>=0;
     };
@@ -896,10 +898,10 @@ const addContext2ActiveDiff = function (data) {
                     }
                 },DYNAMIC_DATA_EXPIRE_SECS));
             }
-            Promise.all(reqs).then(function () {
-                retrieveMobilityDataFromCityXDev(mobilityDataFromCityXDev,addSeries2Chart);
-            }).catch(function (e) {
+            Promise.all(reqs).catch(function (e) {
                 console.log(e);
+                return reqs;
+            }).then(function () {
                 retrieveMobilityDataFromCityXDev(mobilityDataFromCityXDev,addSeries2Chart);
             });
         }
