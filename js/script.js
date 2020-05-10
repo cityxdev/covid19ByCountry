@@ -128,7 +128,7 @@ const retrieveTestingDataFromOWID = function(from, to) {
     let lastDate = undefined, lastCountry = undefined;
     for (let l = 1; l < testLines.length; l++) {
         let line = testLines[l];
-        let values = line.split(',');
+        let values = line.replace(/"([^"]+)"/g,"_").split(',');
         let nameFromServer = values[0];
         if (shouldDiscardCountryLabel(nameFromServer))
             continue;
@@ -207,7 +207,7 @@ const retrieveTestingDateFromWikiData = function(from, to){
             'Chile',
             'Ukraine',
             'France',
-            'Canada',
+            'Japan',
         ];
         return _2Discard.indexOf(dataSourceCountryName)>=0;
     };
