@@ -208,6 +208,8 @@ const retrieveTestingDateFromWikiData = function(from, to){
             'Ukraine',
             'France',
             'Japan',
+            'Spain',
+            'Turkey',
         ];
         return _2Discard.indexOf(dataSourceCountryName)>=0;
     };
