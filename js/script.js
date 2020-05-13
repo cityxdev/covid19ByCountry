@@ -210,6 +210,7 @@ const retrieveTestingDateFromWikiData = function(from, to){
             'Japan',
             'Spain',
             'Turkey',
+            'Portugal',
         ];
         return _2Discard.indexOf(dataSourceCountryName)>=0;
     };
@@ -358,7 +359,7 @@ const generateCountryDetails = function(data) {
     }
 };
 
-const retrieveData = function(covidDataFromPomber,testingDataFromWikiData,testingDataFromOWID){
+const retrieveData = function(covidDataFromPomber,testingDataFromOWID){//},testingDataFromWikiData,testingDataFromOWID){
     const COLORS = ['#003f5c','#bc5090','#007e7b','#ff6361','#ffa600','#008004','#58508d','#9c3600'];
 
     const data = {countryData: {}};
@@ -388,7 +389,7 @@ const retrieveData = function(covidDataFromPomber,testingDataFromWikiData,testin
         }
     }
 
-    retrieveTestingDateFromWikiData(testingDataFromWikiData, data);
+    // retrieveTestingDateFromWikiData(testingDataFromWikiData, data);
     retrieveTestingDataFromOWID(testingDataFromOWID, data);
 
     generateModelData(data);
@@ -955,17 +956,17 @@ const reload = function(){
                             "  SERVICE wikibase:label { bd:serviceParam wikibase:language \"[EN],en\". }\n" +
                             "}\n" +
                             "ORDER BY (?countryLabel) (?itemLabel) (?date)";
-                    makeSPARQLQuery(
-                        testDataEndpoint,
-                        testDataSparqlQuery,
-                        function( testingDataFromWikiData ) {
+                   // makeSPARQLQuery(
+                   //     testDataEndpoint,
+                   //     testDataSparqlQuery,
+                   //     function( testingDataFromWikiData ) {
                             cache4js.ajaxCache({
                                 url: 'https://raw.githubusercontent.com/owid/covid-19-data/master/public/data/testing/covid-testing-all-observations.csv',
                                 success: function (testingDataFromOWID) {
                                     loadCountries(countryDataFromServer, covidDataFromPomber);
                                     loadChosenCountries();
 
-                                    let data = retrieveData(covidDataFromPomber, testingDataFromWikiData, testingDataFromOWID);
+                                    let data = retrieveData(covidDataFromPomber, testingDataFromOWID); //testingDataFromWikiData, testingDataFromOWID);
                                     generateCountryDetails(data);
                                     generateWeightedData(data);
 
@@ -984,8 +985,8 @@ const reload = function(){
                                     });
                                 }
                             },DYNAMIC_DATA_EXPIRE_SECS);
-                        }
-                    );
+                        // }
+                    // );
                 }
             },DYNAMIC_DATA_EXPIRE_SECS);
         }
