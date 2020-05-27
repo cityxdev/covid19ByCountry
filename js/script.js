@@ -124,6 +124,8 @@ const retrieveTestingDataFromOWID = function(from, to) {
         else to.countryData[cName].test.data=undefined;
     }
 
+    let retrievedCountryNames = [];
+
     let testLines = from.split('\n');
     let lastDate = undefined, lastCountry = undefined;
     for (let l = 1; l < testLines.length; l++) {
@@ -172,6 +174,9 @@ const retrieveTestingDataFromOWID = function(from, to) {
                     countryData.test.data.push(null);
                 }
                 lastDate = date;
+
+                retrievedCountryNames[cName]={};
+
             } catch (e) {
                 console.log(e);
             }
@@ -179,7 +184,7 @@ const retrieveTestingDataFromOWID = function(from, to) {
     }
 
 
-    for (let cName in to.countryData) {
+    for (let cName in retrievedCountryNames) {
         let country = to.countryData[cName];
         for(let d = 0 ; d < daysBetween(country.test.firstDate,country.first100ConfDate) ; d++)
             country.test.data.unshift(null);
@@ -189,28 +194,7 @@ const retrieveTestingDataFromOWID = function(from, to) {
 const retrieveTestingDateFromWikiData = function(from, to){
     const shouldDiscardCountry = function (dataSourceCountryName) {
         const _2Discard = [
-            'Italy',
-            'Israel',
-            'Germany',
-            'United Kingdom',
-            'Bulgaria',
-            'Belgium',
-            'Greece',
-            'Switzerland',
-            'Ireland',
-            'Panama',
-            'Costa Rica',
-            'Finland',
-            'Belarus',
-            'Latvia',
-            'India',
-            'Chile',
-            'Ukraine',
-            'France',
-            'Japan',
-            'Spain',
-            'Turkey',
-            'Portugal',
+
         ];
         return _2Discard.indexOf(dataSourceCountryName)>=0;
     };
@@ -221,12 +205,24 @@ const retrieveTestingDateFromWikiData = function(from, to){
         return dataSourceCountryName;
     };
 
+    let existent = [];
+    for (let cName in to.countryData) {
+        if (lastNonNullNonUndefinedValue(to.countryData[cName].test.data) !== null)
+            existent.push(cName);
+        else to.countryData[cName].test.data=undefined;
+    }
+
+    let retrievedCountryNames = [];
+
     let lastDate = undefined;
     for(let e in from.results.bindings){
         let entry = from.results.bindings[e];
         let cName = dataSourceCountryName2CountryName(entry.countryLabel.value);
 
         if(shouldDiscardCountry(cName))
+            continue;
+
+        if(existent.indexOf(cName)>=0)
             continue;
 
         let country = to.countryData[cName];
@@ -258,10 +254,12 @@ const retrieveTestingDateFromWikiData = function(from, to){
                 country.test.data.push(null);
             }
             lastDate = date;
+
+            retrievedCountryNames[cName]={};
         }
     }
 
-    for (let cName in to.countryData) {
+    for (let cName in retrievedCountryNames) {
         let country = to.countryData[cName];
         for(let d = 0 ; d < daysBetween(country.test.firstDate,country.first100ConfDate) ; d++)
             country.test.data.unshift(null);
@@ -359,7 +357,7 @@ const generateCountryDetails = function(data) {
     }
 };
 
-const retrieveData = function(covidDataFromPomber,testingDataFromOWID){//},testingDataFromWikiData,testingDataFromOWID){
+const retrieveData = function(covidDataFromPomber,testingDataFromWikiData,testingDataFromOWID){
     const COLORS = ['#003f5c','#bc5090','#007e7b','#ff6361','#ffa600','#008004','#58508d','#9c3600'];
 
     const data = {countryData: {}};
@@ -389,8 +387,8 @@ const retrieveData = function(covidDataFromPomber,testingDataFromOWID){//},testi
         }
     }
 
-    // retrieveTestingDateFromWikiData(testingDataFromWikiData, data);
     retrieveTestingDataFromOWID(testingDataFromOWID, data);
+    retrieveTestingDateFromWikiData(testingDataFromWikiData, data);
 
     generateModelData(data);
 
@@ -956,17 +954,17 @@ const reload = function(){
                             "  SERVICE wikibase:label { bd:serviceParam wikibase:language \"[EN],en\". }\n" +
                             "}\n" +
                             "ORDER BY (?countryLabel) (?itemLabel) (?date)";
-                   // makeSPARQLQuery(
-                   //     testDataEndpoint,
-                   //     testDataSparqlQuery,
-                   //     function( testingDataFromWikiData ) {
+                   makeSPARQLQuery(
+                       testDataEndpoint,
+                       testDataSparqlQuery,
+                       function( testingDataFromWikiData ) {
                             cache4js.ajaxCache({
                                 url: 'https://raw.githubusercontent.com/owid/covid-19-data/master/public/data/testing/covid-testing-all-observations.csv',
                                 success: function (testingDataFromOWID) {
                                     loadCountries(countryDataFromServer, covidDataFromPomber);
                                     loadChosenCountries();
 
-                                    let data = retrieveData(covidDataFromPomber, testingDataFromOWID); //testingDataFromWikiData, testingDataFromOWID);
+                                    let data = retrieveData(covidDataFromPomber, testingDataFromWikiData, testingDataFromOWID);
                                     generateCountryDetails(data);
                                     generateWeightedData(data);
 
@@ -985,8 +983,8 @@ const reload = function(){
                                     });
                                 }
                             },DYNAMIC_DATA_EXPIRE_SECS);
-                        // }
-                    // );
+                        }
+                    );
                 }
             },DYNAMIC_DATA_EXPIRE_SECS);
         }
