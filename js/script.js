@@ -849,8 +849,8 @@ const addContext2ActiveDiff = function (data) {
                         countryData.activeDiffContext = {};
                         const kinds = ['retail_and_recreation_percent_change_from_baseline','grocery_and_pharmacy_percent_change_from_baseline','parks_percent_change_from_baseline','transit_stations_percent_change_from_baseline','workplaces_percent_change_from_baseline'];
                         let lastDate = undefined;
-                        for(let e in mobilityDataFromCityXDev[cName].country){
-                            const elem = mobilityDataFromCityXDev[cName].country[e];
+                        for(let e in mobilityDataFromCityXDev[cName]){
+                            const elem = mobilityDataFromCityXDev[cName][e];
                             const date = new Date(elem.date);
                             if (date >= countryData.first100ConfDate){
                                 if (!countryData.activeDiffContext.data) {
@@ -890,7 +890,7 @@ const addContext2ActiveDiff = function (data) {
                 const country2LetterCode = country.alpha2Code;
                 reqs.push(cache4js.ajaxCache({
                     context: {cName: country.name},
-                    url: 'https://cityxdev.github.io/covid19GoogleMobilityJSON/data/google_mobility_data_'+country2LetterCode+'.json',
+                    url: 'https://cityxdev.github.io/covid19GoogleMobilityJSON/data/countries/google_mobility_data_'+country2LetterCode+'.json',
                     success: function(data){
                         mobilityDataFromCityXDev[this.cName]=(typeof data) === 'string' ? JSON.parse(data) : data;
                     },
