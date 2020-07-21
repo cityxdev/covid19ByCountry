@@ -390,7 +390,7 @@ const retrieveData = function(covidDataFromPomber,testingDataFromWikiData,testin
     retrieveTestingDataFromOWID(testingDataFromOWID, data);
     retrieveTestingDateFromWikiData(testingDataFromWikiData, data);
 
-    generateModelData(data);
+    // generateModelData(data);
 
     return data;
 };
@@ -1118,13 +1118,13 @@ $(function () {
         );
     });
 
-    $('#add_simulation_active').change(function () {
-        if($(this).is(':checked')){
-            addSimulation2Active($('#active_chart').data('currentdata'));
-        } else {
-            removeSimulationFromActive();
-        }
-    });
+    // $('#add_simulation_active').change(function () {
+    //     if($(this).is(':checked')){
+    //         addSimulation2Active($('#active_chart').data('currentdata'));
+    //     } else {
+    //         removeSimulationFromActive();
+    //     }
+    // });
 
     $('#add_context_active_diff').change(function () {
         if($(this).is(':checked')){
