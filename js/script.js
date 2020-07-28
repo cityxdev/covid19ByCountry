@@ -113,7 +113,7 @@ const retrieveTestingDataFromOWID = function(from, to) {
 
     const getValueIndexForCountryName = function(cName){
         switch (cName) {
-            default: return 6;
+            default: return 7;
         }
     };
 
@@ -458,7 +458,6 @@ const generateWeightedData = function(data) {
             }
             country.activeDiff.data = smoothedActiveDiffData;
 
-            let testDataProblem = false;
             country.confPerTest = {data: []};
             for (let i = 0; i < (country.test.data ? country.test.data.length : 0); i++) {
                 if (!country.conf.data || country.conf.data.length < i + 1)
@@ -468,20 +467,15 @@ const generateWeightedData = function(data) {
                 if (confs === null || tests === null)
                     country.confPerTest.data.push(null);
                 else if (confs / tests > 0.99) {//confirmed cases cannot be more than 99% of tests
-                    testDataProblem = true;
-                    break;
+                    country.test.data[i]=null;
+                    country.confPerTest.data.push(null);
                 } else country.confPerTest.data.push(confs / tests * 100);
             }
-            if (testDataProblem) {
-                country.confPerTest = {data: []};
-                country.testPerMega = {data: []};
-                console.log('Problem on testing data for country "' + cName + '"');
-            } else {
-                country.testPerMega = {data: []};
-                for (let i = 0; i < (country.test.data ? country.test.data.length : 0); i++) {
-                    const absValue = country.test.data[i];
-                    country.testPerMega.data.push(absValue === null || absValue === undefined ? null : absValue / megas);
-                }
+
+            country.testPerMega = {data: []};
+            for (let i = 0; i < (country.test.data ? country.test.data.length : 0); i++) {
+                const absValue = country.test.data[i];
+                country.testPerMega.data.push(absValue === null || absValue === undefined ? null : absValue / megas);
             }
         }
     }
@@ -954,10 +948,10 @@ const reload = function(){
                             "  SERVICE wikibase:label { bd:serviceParam wikibase:language \"[EN],en\". }\n" +
                             "}\n" +
                             "ORDER BY (?countryLabel) (?itemLabel) (?date)";
-                   makeSPARQLQuery(
-                       testDataEndpoint,
-                       testDataSparqlQuery,
-                       function( testingDataFromWikiData ) {
+                    makeSPARQLQuery(
+                        testDataEndpoint,
+                        testDataSparqlQuery,
+                        function( testingDataFromWikiData ) {
                             cache4js.ajaxCache({
                                 url: 'https://raw.githubusercontent.com/owid/covid-19-data/master/public/data/testing/covid-testing-all-observations.csv',
                                 success: function (testingDataFromOWID) {
