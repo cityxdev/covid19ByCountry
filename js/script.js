@@ -103,17 +103,15 @@ const retrieveTestingDataFromOWID = function(from, to) {
         const split = dataSourceCountryName.split(' - ');
         if(split.length===2 && split[1]==='people tested')
             return true;
-        switch (dataSourceCountryName) {
-            case 'United States - specimens tested (CDC)':
-                return false;
-            default:
-                return false;
-        }
+        return false;
     };
 
     const getValueIndexForCountryName = function(cName){
         switch (cName) {
-            default: return 7;
+            // case 'Portugal': return 6;
+            // case 'Spain': return 6;
+            // case 'Israel': return 6;
+            default: return 6;
         }
     };
 
@@ -146,7 +144,7 @@ const retrieveTestingDataFromOWID = function(from, to) {
                 lastDate = undefined;
             }
             try {
-                let date = new Date(values[2]);
+                let date = new Date(values[1]);
 
                 if (date < countryData.first100ConfDate)
                     continue;
@@ -191,7 +189,7 @@ const retrieveTestingDataFromOWID = function(from, to) {
     }
 };
 
-const retrieveTestingDateFromWikiData = function(from, to){
+const retrieveTestingDataFromWikiData = function(from, to){
     const shouldDiscardCountry = function (dataSourceCountryName) {
         const _2Discard = [
 
@@ -388,7 +386,7 @@ const retrieveData = function(covidDataFromPomber,testingDataFromWikiData,testin
     }
 
     retrieveTestingDataFromOWID(testingDataFromOWID, data);
-    retrieveTestingDateFromWikiData(testingDataFromWikiData, data);
+    retrieveTestingDataFromWikiData(testingDataFromWikiData, data);
 
     // generateModelData(data);
 
